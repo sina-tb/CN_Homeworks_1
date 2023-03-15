@@ -1,9 +1,9 @@
 #include <iostream>
-#include "costumer.h"
+#include "user.h"
 
 using namespace std;
 
-class Costumer {
+class User {
 
 public:
         
@@ -11,11 +11,11 @@ public:
     string name;
     string password;
     bool admin;
-    string purse;
+    int purse;
     string phoneNumber;
     string address;
     
-    Costumer(int in_id,string in_name,string in_password,bool in_admin,string in_purse,string in_pn,string in_adr)
+    User(int in_id,string in_name,string in_password,bool in_admin,int in_purse,string in_pn,string in_adr)
     {
         id = in_id;
         name = in_name;

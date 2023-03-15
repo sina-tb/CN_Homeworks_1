@@ -2,7 +2,7 @@
 #include <vector>
 
 using namespace std;
-class User{
+class Reservation{
 
 public:
 
@@ -11,7 +11,7 @@ public:
     string reserveDate;
     string checkoutDate;
     
-    User(int in_id,int in_nob,string rd, string cd);
+    Reservation(int in_id,int in_nob,string rd, string cd);
 
 };
 class Room {
@@ -23,9 +23,9 @@ public:
     int price;
     int maxCapacity;
     int capacity;
-    vector <User> users;
+    vector <Reservation> users;
 
-    Room(string num , int stat, int in_price, int max_cap, int cap, vector <User> usrs);
+    Room(string num , int stat, int in_price, int max_cap, int cap, vector <Reservation> usrs);
 
 };
 
