@@ -6,7 +6,7 @@ BUILD_DIR=build
 output: hotel.o -ljsoncpp
 	$(CC) hotel.o -ljsoncpp -o output
 
-hotel.o: room.hpp hotel.hpp user.hpp hotel.cpp
+hotel.o: room.hpp hotel.hpp user.hpp hotel.cpp Error.cpp
 	$(CC) -c hotel.cpp -ljsoncpp
 
 clean:
