@@ -11,7 +11,6 @@ public:
     string reserveDate;
     string checkoutDate;
     
-    Reservation(int in_id,int in_nob,string rd, string cd);
 
 };
 class Room {
@@ -25,7 +24,6 @@ public:
     int capacity;
     vector <Reservation> users;
 
-    Room(string num , int stat, int in_price, int max_cap, int cap, vector <Reservation> usrs);
 
 };
 
