@@ -15,6 +15,7 @@ public:
     Hotel(vector <User> usr, vector <Room> ro);
     void decode_users();
     void decode_rooms();
+    void decode_server();
     void rooms_information(bool admin);
     void users_information();
     bool signup_signin_handler(vector <string> words,User *logged_user);
@@ -27,4 +28,9 @@ public:
     void logout();
     void logged_user_information(User *logged_user);
     bool edit_information(User *logged_user);
+    void room_handler(vector <string> commands);
+    bool add_room(string room_number, int max_capacity,int price);
+    bool modify_room(string room_number,int max_capacity,int price);
+    bool remove_room(string room_number);
+    void leave_room(vector <string> commands ,User *logged_user);
 };
