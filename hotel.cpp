@@ -1,3 +1,12 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <sys/time.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -6,6 +15,7 @@
 #include <jsoncpp/json/json.h>
 #include <string.h>
 #include <bits/stdc++.h> 
+
 
 using namespace std;
 
@@ -25,9 +35,9 @@ Hotel::Hotel(vector <User> usr, vector <Room> ro)
     rooms = ro;
 }
 
-void Hotel::start_print()
+void Hotel::start_print(int fd)
 {
-    cout<<"Welcome"<<endl<<"Please signup or signin to hotel first"<<endl;
+    write(fd,"Welcome\nPlease signup or signin to hotel first\n",48);
 }
 void Hotel::decode_users()
 {
@@ -185,41 +195,43 @@ bool Hotel::signup(string username,User *logged_user)
 
     return true;
 }
-bool Hotel::signin(string username, string password, User *logged_user)
+bool Hotel::signin(string username, string password)
 {
     for ( int index = 0 ; index < users.size() ; index ++ )
     {
         if ( users[index].name == username && users[index].password == password)
         {   
-            logged_user->name = users[index].name;
-            logged_user->id = users[index].id;
-            logged_user->admin = users[index].admin;
-            logged_user->password = users[index].password;
-            logged_user->phoneNumber = users[index].phoneNumber;
-            logged_user->address = users[index].address;
-            logged_user->purse = users[index].purse;
+            // logged_user->name = users[index].name;
+            // logged_user->id = users[index].id;
+            // logged_user->admin = users[index].admin;
+            // logged_user->password = users[index].password;
+            // logged_user->phoneNumber = users[index].phoneNumber;
+            // logged_user->address = users[index].address;
+            // logged_user->purse = users[index].purse;
             return true;
         }
     } 
     return false;
 }
-bool Hotel:: signup_signin_handler(vector <string> words,User *logged_user)
+int Hotel:: signup_signin_handler(string input)
 {
+    vector <string> words(string_split(input));
     string command = words[0];
     if( words.size() == 3 && command == "signin" )
     {
         string username = words[1];
         string password = words[2];
-        bool signin_check = signin(username , password, logged_user);
+        cout << username.size() << "," << password.size() ;
+        bool signin_check = signin(username , password);
         if ( signin_check == true)
         {
             err_230();
-            return true;
+            return 2;
         }
         if ( signin_check == false)
         {   
             err_430();
-            return false;
+            return 0;
         }
     }
     else if( words.size() == 2 && command == "signup")
@@ -229,29 +241,20 @@ bool Hotel:: signup_signin_handler(vector <string> words,User *logged_user)
         if (signup_check == true)
         {
             err_451();
-            return false;
+            return 0;
         }
         if ( signup_check == false)
         {
             err_311();
-            bool signup_or_not = signup(username,logged_user);
-            if (signup_or_not == true)
-            {
-                err_231();
-                return true;
-            }
-            if (signup_or_not == false)
-            {
-                err_503();
-                return false;
-            }
+            return 1;
         }
     }
     else
     {
         err_503();
-        return false;
+        return 0;
     }
+    return 0;
 }
 void Hotel::logout()
 {
@@ -343,6 +346,7 @@ int Hotel:: handle_reservation_page(vector <string> commands,User *logged_user)
         err_503();
         return false;
     }
+    return false;
 }
 void Hotel:: logged_user_information(User *logged_user)
 {
@@ -577,8 +581,88 @@ void Hotel::leave_room(vector <string> commands ,User *logged_user)
     return;
 }
 
-int main()
+// void Hotel::procces()
+// {
+//     vector <User> users;
+//     vector <Room> rooms;
+//     Hotel myhotel(users,rooms);
+//     User logged_user;
+//     bool signup_signin_level = false;
+//     bool reservation_level = false;
+//     myhotel.decode_users();
+//     myhotel.decode_rooms();
+//     // myhotel.start_print();
+//     while(signup_signin_level != true)
+//     {
+//         string input_str;
+//         getline(cin, input_str);
+//         vector <string> words(string_split(input_str));
+//         signup_signin_level = myhotel.signup_signin_handler(words,&logged_user);
+//     }
+//     while(reservation_level != true)
+//     {
+//         string input_str;
+//         myhotel.reservation_page();
+//         getline(cin, input_str);
+//         vector <string> words(string_split(input_str));
+//         reservation_level = myhotel.handle_reservation_page(words,&logged_user);
+//     }
+// }
+
+int setupServer(int port) {
+    struct sockaddr_in address;
+    int server_fd;
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+    int opt = 1;
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(port);
+
+    int connected = bind(server_fd, (struct sockaddr *)&address, sizeof(address));
+    if(connected == -1)
+        return -1;
+    
+    listen(server_fd, 10);
+
+    return server_fd;
+}
+
+int acceptClient(int server_fd) {
+    int client_fd;
+    struct sockaddr_in client_address;
+    int address_len = sizeof(client_address);
+    client_fd = accept(server_fd, (struct sockaddr *)&client_address, (socklen_t*) &address_len);
+
+    return client_fd;
+}
+
+bool decode_server(struct server* server)
 {
+    string filename = "jsons/config.json";
+    ifstream file(filename);
+    Json::Value root;
+    Json::Reader reader;
+    bool parsingSuccessful = reader.parse( file, root );
+    if ( !parsingSuccessful )
+    {
+        cout << "Error parsing the string" << endl;
+    }
+    bool status = root["connected"].asBool();
+    if(status)
+    {
+        cout << "this port is already taken try another one" << endl;
+        // root["connected"] = true;
+        return false;
+    }
+    server->host = root["hostName"].asString();
+    server->port = root["commandChannelPort"].asInt();
+    return true;
+}
+
+int main(int argc, char const *argv[]) {
     vector <User> users;
     vector <Room> rooms;
     Hotel myhotel(users,rooms);
@@ -587,20 +671,74 @@ int main()
     bool reservation_level = false;
     myhotel.decode_users();
     myhotel.decode_rooms();
-    myhotel.start_print();
-    while(signup_signin_level != true)
+
+    struct server server;
+    // if(!decode_server(&server))
+    //     return 0;
+    decode_server(&server);
+    int new_socket, max_sd;
+    char temp_buff [2048];
+    fd_set master_set, working_set;
+    server.fd = setupServer(server.port);
+    if(server.fd == -1)
     {
-        string input_str;
-        getline(cin, input_str);
-        vector <string> words(string_split(input_str));
-        signup_signin_level = myhotel.signup_signin_handler(words,&logged_user);
+        cout << "this port is already in use"<< endl;
+        return 0;
+    }   
+    FD_ZERO(&master_set);
+    max_sd = server.fd;
+    FD_SET(server.fd, &master_set);
+
+    int sign_in [100];
+
+    //set date 
+
+
+    while (1) {
+        working_set = master_set;
+        select(max_sd + 1, &working_set, NULL, NULL, NULL);
+
+        for (int i = 0; i <= max_sd; i++) {
+            if (FD_ISSET(i, &working_set)) {
+                
+                if (i == server.fd) {  // new clinet
+                    new_socket = acceptClient(server.fd);
+                    FD_SET(new_socket, &master_set);
+                    if (new_socket > max_sd)
+                        max_sd = new_socket;
+                    myhotel.start_print(new_socket);
+                    sign_in[new_socket] = 0;
+                    cout << "New client connected(fd =" << new_socket << ")" << endl;
+                }
+                
+                else { // client sending msg
+                    int bytes_received = 0;
+                    bytes_received = recv(i , temp_buff , sizeof(temp_buff), 0);
+                    string buffer = temp_buff;
+                    // buffer.pop_back();
+                    // cout << buffer << "," << buffer.size();
+                    // cout << bytes_received << endl;
+
+                    if (bytes_received == 0) { // EOF
+                        printf("client fd = %d closed\n", i);
+                        close(i);
+                        FD_CLR(i, &master_set);
+                        continue;
+                    }
+                    
+                    if(sign_in[i] == 0)
+                        sign_in[i] = myhotel.signup_signin_handler(buffer);
+                    else if(sign_in[i] == 1)
+                    {
+                        // signup data
+                    }
+                    cout << "client" << i << " said:" << buffer;
+                    write(new_socket, "hello", 6);
+                    buffer = "";
+                    memset(temp_buff,0,2048);
+                }
+            }
+        }
     }
-    while(reservation_level != true)
-    {
-        string input_str;
-        myhotel.reservation_page();
-        getline(cin, input_str);
-        vector <string> words(string_split(input_str));
-        reservation_level = myhotel.handle_reservation_page(words,&logged_user);
-    }
+    return 0;
 }

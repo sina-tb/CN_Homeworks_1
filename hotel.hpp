@@ -5,6 +5,7 @@
 
 using namespace std;
 
+
 class Hotel {       
 
 public:
@@ -18,9 +19,9 @@ public:
     void decode_server();
     void rooms_information(bool admin);
     void users_information();
-    bool signup_signin_handler(vector <string> words,User *logged_user);
-    void start_print();
-    bool signin(string username , string password,User *logged_user);
+    int signup_signin_handler(string input);
+    void start_print(int fd);
+    bool signin(string username , string password);
     bool signup(string username,User* logged_user);
     bool check_user_signup(string username);
     void reservation_page();
@@ -33,4 +34,17 @@ public:
     bool modify_room(string room_number,int max_capacity,int price);
     bool remove_room(string room_number);
     void leave_room(vector <string> commands ,User *logged_user);
+    void procces();
+    
 };
+
+struct server 
+{
+    int fd;
+    string host;
+    int port; 
+};
+
+int setupServer(int port);
+int acceptClient(int server_fd);
+bool decode_server(struct server* server);

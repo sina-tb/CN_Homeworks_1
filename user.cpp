@@ -57,11 +57,65 @@ void decode_server(struct server* server)
     server->port = root["commandChannelPort"].asInt();
 }
 
+vector <string> string_split(string input_str)
+{ 
+    vector <string> words;
+    string str;
+    stringstream ss(input_str); 
+    while (getline(ss, str, ' ')) 
+        words.push_back(str);
+    return words;
+}
+
+int sign_user(int fd)
+{
+    char serverbuff [1024];
+    char buff[1024];
+    memset(buff,0,1024);
+    read(0,buff,1024);
+    string temp = buff;
+    temp.pop_back();
+    cout << temp << "," << temp.size();
+    send(fd,buff, temp.size(),0);
+    recv(fd,serverbuff,1024,0);
+    vector <string> input(string_split(temp));
+    string s_buff = serverbuff;
+    cout << s_buff << endl;
+    vector <string> sr_b(string_split(s_buff));  //
+    if(input[0] == "signin")
+    {
+        if(sr_b[0] == "230")
+            return 1;
+    }
+    else if (input[0] == "signup")
+    {
+        if(sr_b[0] == "311")
+        {
+            string data;
+            for(int i = 0;i < 3; i++)
+            {
+                cin >> temp; //////change
+                data = data + " " + temp;
+            }
+            send(fd,data.c_str(),data.size(),0);
+            memset(serverbuff,0,1024);
+            recv(fd,serverbuff,1024,0);
+            string s_buff(serverbuff);
+            cout << s_buff << endl;
+            vector <string> sr_b(string_split(s_buff));
+            if(sr_b[0] == "231")
+                return 1;
+        }
+    }
+    return 0;
+}
+
 
 
 int main(int argc, char const *argv[]) {
     struct server server;
     decode_server(&server);
+    int state = 0;
 
     int fd;
     char buff[1024] = {0};
@@ -71,11 +125,19 @@ int main(int argc, char const *argv[]) {
 
     while(1)
     {
+        if(state == 0)
+        {   
+            recv(fd,serverbuff,1024,0);
+            cout << serverbuff;
+            state = sign_user(fd);
+            //continue???
+        }
         recv(fd,serverbuff,1024,0);
         printf("server said:%s\n",serverbuff);
         read(0,buff,1024);
         send(fd, buff, strlen(buff), 0);
-
+        memset(buff,0,1024);
+        memset(serverbuff,0,1024);
     }
     return 0;
 }

@@ -11,6 +11,8 @@
 #include <iostream>
 #include <string.h>
 #include <fstream>
+#include "server.hpp"
+#include <jsoncpp/json/writer.h>
 
 using namespace std;
 
@@ -42,22 +44,7 @@ int acceptClient(int server_fd) {
     return client_fd;
 }
 
-struct client
-{
-    int fd;
-    int rule; 
-    int state; 
-};
-
-struct server 
-{
-    int fd;
-    string host;
-    int port; 
-    bool connected;
-};
-
-void decode_server(struct server* server)
+bool decode_server(struct server* server)
 {
     string filename = "jsons/config.json";
     ifstream file(filename);
@@ -68,72 +55,25 @@ void decode_server(struct server* server)
     {
         cout << "Error parsing the string" << endl;
     }
-    server->connected = root["connected"].asBool();
+    bool status = root["connected"].asBool();
+    if(status)
+    {
+        cout << "this port is already taken try another one" << endl;
+        root["connected"] = true;
+        return false;
+    }
     server->host = root["hostName"].asString();
     server->port = root["commandChannelPort"].asInt();
-    // set connected to true
+    return true;
 }
 
 
+// void blocking_port()
+// {
+//     string filename = "jsons/config.json";
+//     ifstream file(filename);
+//     Json::Value event;
+//     event["connected"] = true;
+//     cout << event << endl;
+// }
 
-int main(int argc, char const *argv[]) {
-    struct server server;
-    decode_server(&server);
-    int new_socket, max_sd;
-    char temp_buff [2048];
-    fd_set master_set, working_set;
-    if(!server.connected)
-        server.fd = setupServer(server.port);
-    else 
-    {
-        cout << "already server connected on this port" << endl;
-        return 0;
-    }
-   
-    FD_ZERO(&master_set);
-    max_sd = server.fd;
-    FD_SET(server.fd, &master_set);
-
-    vector <int> clients;
-    cout << "server is running..." << endl;
-
-    while (1) {
-        working_set = master_set;
-        select(max_sd + 1, &working_set, NULL, NULL, NULL);
-
-        for (int i = 0; i <= max_sd; i++) {
-            if (FD_ISSET(i, &working_set)) {
-                
-                if (i == server.fd) {  // new clinet
-                    new_socket = acceptClient(server.fd);
-                    FD_SET(new_socket, &master_set);
-                    clients.push_back(new_socket);
-                    if (new_socket > max_sd)
-                        max_sd = new_socket;
-                    write(new_socket, "hello", 6);
-                    cout << "New client connected(fd =" << new_socket << ")" << endl;
-                }
-                
-                else { // client sending msg
-                    int bytes_received = 0;
-                    bytes_received = recv(i , temp_buff , sizeof(temp_buff), 0);
-                    
-                    if (bytes_received == 0) { // EOF
-                        printf("client fd = %d closed\n", i);
-                        close(i);
-                        FD_CLR(i, &master_set);
-                        continue;
-                    }
-                    string buffer(temp_buff);
-                    cout << "client" << i << " said:" << buffer;
-                    write(new_socket, "hello", 6);
-                    buffer = "";
-                    memset(temp_buff,0,2048);
-                }
-            }
-        }
-
-    }
-
-    return 0;
-}
