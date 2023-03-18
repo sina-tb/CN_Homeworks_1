@@ -94,6 +94,9 @@ void Hotel::decode_rooms()
         rooms.push_back(new_room);
     }
 }
+
+
+
 void Hotel::rooms_information(bool admin)
 {
     for ( int i = 0 ; i < rooms.size() ; i++ )
@@ -307,11 +310,28 @@ int Hotel:: handle_reservation_page(vector <string> commands,User *logged_user)
     }
     else if( commands.size() == 1 && number == "8" )
     {
-        
+        cout<<"leave room section:"<<endl;
+        string str_input;
+        getline(cin,str_input);
+        vector <string> words(string_split(str_input));
+        leave_room(words,logged_user);
+        return false;
     }
     else if( commands.size() == 1 && number == "9" )
     {
-        
+        if ( logged_user->admin == true)
+        {
+            cout<<"Room add,modify,remove:"<<endl;
+            string str_input;
+            getline(cin,str_input);
+            vector <string> words(string_split(str_input));
+            room_handler(words);
+        }
+        else
+        {
+            err_403();
+        }
+        return false;
     }
     else if( commands.size() == 1 && number == "0" )
     {
@@ -398,6 +418,163 @@ bool Hotel::edit_information(User *logged_user)
         return true;
     }
 
+}
+bool Hotel::modify_room(string room_number,int max_capacity,int price)
+{
+    for ( int index = 0; index < rooms.size(); index ++)
+    {
+        if ( rooms[index].number == room_number)
+        {   
+            if ( max_capacity > rooms[index].maxCapacity)
+            {
+                rooms[index].status = 0;
+            }
+            rooms[index].maxCapacity = max_capacity;
+            rooms[index].price = price;
+            return true;
+        }
+    }
+    return false;
+
+}
+bool Hotel::add_room(string room_number, int max_capacity,int price)
+{
+    for ( int index = 0 ; index < rooms.size(); index ++)
+    {
+        if( rooms[index].number == room_number)
+        {
+            return false;
+        }
+    }
+
+    Room new_room;
+    vector <Reservation> new_res;
+    new_room.maxCapacity = max_capacity;
+    new_room.number = room_number;
+    new_room.capacity = max_capacity;
+    new_room.price = price;
+    new_room.status = 0;
+    rooms.push_back(new_room);
+    return true;
+}
+bool Hotel::remove_room(string room_number)
+{
+    for ( int index = 0; index < rooms.size(); index ++)
+    {
+        if ( rooms[index].number == room_number)
+        {  
+            rooms.erase(rooms.begin()+ index);
+            return true;
+        }
+    }
+    return false; 
+}
+void Hotel::room_handler(vector <string> commands)
+{
+    if ( commands.size()  == 4 && commands[0] == "add")
+    {
+        bool stat = add_room(commands[1],stoi(commands[2]),stoi(commands[3]));
+        if ( stat == false )
+        {
+            err_111();
+        }
+        else
+        {
+            err_104();
+        }
+    }
+    else if( commands.size() == 4 && commands[0] == "modify")
+    {
+        bool stat = modify_room(commands[1],stoi(commands[2]),stoi(commands[3]));
+        if (stat == false)
+        {
+            err_101();
+        }
+        else
+        {
+            err_105();
+        }
+    }
+    else if( commands.size() == 2 && commands[0] == "remove")
+    {
+        bool stat = remove_room(commands[1]);
+        if ( stat == false)
+        {
+            err_101();
+        }
+        else
+        {
+            err_106();
+        }
+    }
+    else
+    {
+        err_503();
+    }
+}
+
+void Hotel::leave_room(vector <string> commands ,User *logged_user)
+{
+    if (logged_user->admin == true && commands.size() == 2 && commands[0] == "room")
+    {
+        for ( int index = 0; index < rooms.size(); index ++)
+        {
+            if (rooms[index].number == commands[1] )
+            {
+                string input_str;
+                getline(cin, input_str);
+                vector <string> words(string_split(input_str));
+                if (words[0] == "capacity" && words.size() == 2)
+                {
+                    int cap = stoi(words[1]);
+                    if (cap == rooms[index].maxCapacity - rooms[index].capacity)
+                    {
+                        rooms[index].capacity = rooms[index].maxCapacity;
+                        rooms[index].users.clear();
+                        err_413();
+                        return;
+                    }
+                    else
+                    {
+                        err_412();
+                        return;
+                    }
+                }
+                else
+                {
+                    err_503();
+                    return;
+                }
+            }
+        }
+        err_101();
+        return;
+
+    }
+    else
+    {
+        for (int index = 0; index < rooms.size(); index ++)
+        {
+            if(commands[1] == rooms[index].number )
+            {
+                for(int j = 0; j< rooms[index].users.size(); j++)
+                {
+                    if( rooms[index].users[j].id == logged_user->id)
+                    {
+                        rooms[index].capacity = rooms[index].capacity + rooms[index].users[j].numOfBeds;
+                        rooms[index].users.erase(rooms[index].users.begin() + j);
+                        err_413();
+                        return;
+                    }
+                }
+                err_102();
+                return;
+            }
+        }
+        err_503();
+        return;
+    }
+    return;
 }
 
 int main()

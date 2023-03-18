@@ -47,7 +47,7 @@
         "number":"301",
         "status":0,
         "price":100,
-        "maxCapacity":1,
+        "maxCapacity":2,
         "capacity":0,
         "users":
         [
