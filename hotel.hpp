@@ -29,7 +29,7 @@ public:
     bool check_user_signup(string username);
     void reservation_page(int fd);
     int handle_reservation_page(string buffer, int fd);
-    void logout();
+    void logout(int fd);
     void logged_user_information(int fd);
     bool edit_information(string buffer,int fd);
     int room_handler(string buffer,int fd);

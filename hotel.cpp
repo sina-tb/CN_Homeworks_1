@@ -133,16 +133,16 @@ int Hotel:: signup_signin_handler(string input, int fd)
     {
         string username = words[1];
         string password = words[2];
-        cout << username.size() << "," << password.size() ;
         bool signin_check = signin(username , password);
         if ( signin_check == true)
         {
-            err_230();
+            err_230(fd);
+            reservation_page(fd);
             return 2;
         }
         if ( signin_check == false)
         {   
-            err_430();
+            err_430(fd);
             return 0;
         }
     }
@@ -152,7 +152,7 @@ int Hotel:: signup_signin_handler(string input, int fd)
         bool signup_check = check_user_signup(username);
         if (signup_check == true)
         {
-            err_451();
+            err_451(fd);
             return 0;
         }
         if ( signup_check == false)
@@ -161,13 +161,13 @@ int Hotel:: signup_signin_handler(string input, int fd)
             new_user.name = username;
             new_user.fd = fd;
             pre_user.push_back(new_user);
-            err_311();
+            err_311(fd);
             return 1;
         }
     }
     else
     {
-        err_503();
+        err_503(fd);
         return 0;
     }
     return 0;
@@ -249,12 +249,11 @@ int Hotel::signup(string buffer,int fd)
     int pre_index = find_pre_user(fd); 
     string username = pre_user[pre_index].name;
     vector <string> info(string_split(buffer));
-    if( buffer.size() != 4 )
+    if( info.size() != 4 )
     {
-        err_503();
+        err_503(fd);
         return 0;
     }
-
     int p = stoi(info[1]);
 
     User new_user;
@@ -268,11 +267,13 @@ int Hotel::signup(string buffer,int fd)
     users.push_back(new_user);
     
     pre_user.erase(pre_user.begin() + pre_index);
+    err_231(fd);
+    reservation_page(fd);
     return 2;
 }
-void Hotel::logout()
+void Hotel::logout(int fd)
 {
-    err_201();
+    err_201(fd);
     return; 
 }
 bool Hotel::edit_information(string buffer,int fd)
@@ -284,7 +285,7 @@ bool Hotel::edit_information(string buffer,int fd)
 
         if (words.size() != 3)
         {
-            err_503();
+            err_503(fd);
             return 2;
         }
 
@@ -292,14 +293,14 @@ bool Hotel::edit_information(string buffer,int fd)
         users[index].address = words[2];
         users[index].phoneNumber = words[1];
 
-        err_312();
+        err_312(fd);
         return 2;
     }
     else
     {
         if ( words.size() != 1)
         {
-            err_503();
+            err_503(fd);
             return 2;
         }
 
@@ -337,19 +338,19 @@ int Hotel::leave_room(string input_str,int fd)
                     {
                         rooms[index].capacity = rooms[index].capacity + rooms[index].users[j].numOfBeds;
                         rooms[index].users.erase(rooms[index].users.begin() + j);
-                        err_413();
+                        err_413(fd);
                         return 2;
                     }
                 }
-                err_102();
+                err_102(fd);
                 return 2;
             }
         }
-        err_503();
+        err_503(fd);
         return 2;
     }
 
-    err_503();
+    err_503(fd);
     return 2;
     
 }
@@ -413,11 +414,11 @@ int Hotel::room_handler(string buffer, int fd)
         bool stat = add_room(commands[1],stoi(commands[2]),stoi(commands[3]));
         if ( stat == false )
         {
-            err_111();
+            err_111(fd);
         }
         else
         {
-            err_104();
+            err_104(fd);
         }
     }
     else if( commands.size() == 4 && commands[0] == "modify")
@@ -425,11 +426,11 @@ int Hotel::room_handler(string buffer, int fd)
         bool stat = modify_room(commands[1],stoi(commands[2]),stoi(commands[3]));
         if (stat == false)
         {
-            err_101();
+            err_101(fd);
         }
         else
         {
-            err_105();
+            err_105(fd);
         }
     }
     else if( commands.size() == 2 && commands[0] == "remove")
@@ -437,16 +438,16 @@ int Hotel::room_handler(string buffer, int fd)
         bool stat = remove_room(commands[1]);
         if ( stat == false)
         {
-            err_101();
+            err_101(fd);
         }
         else
         {
-            err_106();
+            err_106(fd);
         }
     }
     else
     {
-        err_503();
+        err_503(fd);
     }
     return 2;
 }
@@ -468,7 +469,7 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
         }
         else
         {
-            err_403();
+            err_403(fd);
         }
         return 2;
     }
@@ -503,12 +504,12 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     else if( commands.size() == 1 && number == "0" )
     {
-        logout();
+        logout(fd);
         return 10;
     }
     else
     {
-        err_503();
+        err_503(fd);
         return 2;
     }
     return 2;
@@ -575,18 +576,15 @@ void Hotel:: logged_user_information(int fd)
 }
 void Hotel:: reservation_page(int fd)
 {
-    cout<< "###############################"<<endl;
-    cout<< "1. View user information"<<endl;
-    cout<< "2. View all users"<<endl;
-    cout<< "3. View rooms information"<<endl;
-    cout<< "4. Booking"<<endl;
-    cout<< "5. Canceling"<<endl;
-    cout<< "6. Pass day"<<endl;
-    cout<< "7. Edit infromation"<<endl;
-    cout<< "8. Leaving room"<<endl;
-    cout<< "9. Rooms"<<endl;
-    cout<< "0. Logout"<<endl;
-    cout<< "###############################"<<endl;
+    sleep(0.5);
+    send(fd,"###############################\n1. View user information\n2. View all users\n3. View rooms information\n4. Booking\n5. Canceling\n6. Pass day\n7. Edit infromation\n8. Leaving room\n9. Rooms\n0. Logout\n###############################\n",225,0);
+}
+
+string clear_junk(string input,int size)
+{
+    while(input.size() > size)
+        input.pop_back();
+    return input;
 }
 
 int main(int argc, char const *argv[]) {
@@ -641,9 +639,7 @@ int main(int argc, char const *argv[]) {
                     int bytes_received = 0;
                     bytes_received = recv(i , temp_buff , sizeof(temp_buff), 0);
                     string buffer = temp_buff;
-                    // buffer.pop_back();
-                    // cout << buffer << "," << buffer.size();
-                    // cout << bytes_received << endl;
+                    buffer = clear_junk(buffer,bytes_received);
 
                     if (bytes_received == 0) { // EOF
                         printf("client fd = %d closed\n", i);
@@ -651,16 +647,17 @@ int main(int argc, char const *argv[]) {
                         FD_CLR(i, &master_set);
                         continue;
                     }
-                    
+
                     if(sections[i] == 0)
                         sections[i] = myhotel.signup_signin_handler(buffer,i);
                     else if(sections[i] == 1)
-                    {
+                    { 
                         sections[i] = myhotel.signup(buffer,i);
                     }
                     else if(sections[i] == 2)
                     {
-                        myhotel.reservation_page(i);
+                        // myhotel.reservation_page(i);
+                        cout << "welcome to section 2" << endl;
                         sections[i] = myhotel.handle_reservation_page(buffer,i);
                     }
                     else if(sections[i] == 7)
@@ -676,7 +673,7 @@ int main(int argc, char const *argv[]) {
                         sections[i] = myhotel.room_handler(buffer,i);
                     }
                     cout << "client" << i << " said:" << buffer;
-                    write(new_socket, "hello", 6);
+                    // write(new_socket, "hello", 6);
                     buffer = "";
                     memset(temp_buff,0,2048);
                 }
