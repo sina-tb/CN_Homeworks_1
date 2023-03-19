@@ -32,8 +32,6 @@ public:
     int handle_reservation_page(string buffer, int fd);
     void logout(int fd);
     void logged_user_information(int fd);
-
-    void logout();
     bool edit_information(string buffer,int fd);
     int room_handler(string buffer,int fd);
     bool add_room(string room_number, int max_capacity,int price);
