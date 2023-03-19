@@ -12,6 +12,7 @@
 #include <string.h>
 #include <jsoncpp/json/json.h>
 #include <fstream>
+#include <sstream>
 
 using namespace std;
 

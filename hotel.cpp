@@ -28,13 +28,12 @@ vector <string> string_split(string input_str)
         words.push_back(str);
     return words;
 }
-
-Hotel::Hotel(vector <User> usr, vector <Room> ro)
+Hotel::Hotel(vector <User> usr, vector <Room> ro,vector <User> pre)
 {
     users = usr;
     rooms = ro;
+    pre_user = pre;
 }
-
 void Hotel::start_print(int fd)
 {
     write(fd,"Welcome\nPlease signup or signin to hotel first\n",48);
@@ -104,49 +103,6 @@ void Hotel::decode_rooms()
         rooms.push_back(new_room);
     }
 }
-
-
-
-void Hotel::rooms_information(bool admin)
-{
-    for ( int i = 0 ; i < rooms.size() ; i++ )
-    {
-        cout<<endl;
-        cout<< "number : " << rooms[i].number<<endl;
-        cout<< "status : " << rooms[i].status<<endl;
-        cout<< "price : " << rooms[i].price<<endl;
-        cout<< "maxCapacity : " << rooms[i].maxCapacity<<endl;
-        cout<< "capacity : " << rooms[i].capacity<<endl;
-        if ( admin == true)
-        {
-            for ( int j = 0; j< rooms[i].users.size(); j++)
-            {
-                cout<<endl;
-                cout<< "   id : " << rooms[i].users[j].id<<endl;
-                cout<< "   numbOfBeds : " << rooms[i].users[j].numOfBeds<<endl;
-                cout<< "   reserveDate : " << rooms[i].users[j].reserveDate<<endl;
-                cout<< "   checkoutDate : " << rooms[i].users[j].checkoutDate<<endl;
-            }
-        }
-    }
-}  
-void Hotel::users_information()
-{
-    for ( int i = 0 ; i < users.size() ; i++)
-    {
-        cout<< endl;
-        cout<< "id : " << users[i].id<<endl;
-        cout<< "name : " << users[i].name<<endl;
-        cout<< "password : " << users[i].password<<endl;
-        cout<< "admin : " << users[i].admin<<endl;
-        if ( users[i].admin == false)
-        {
-            cout<< "purse : " << users[i].purse<<endl;
-            cout<< "phoneNumber : " << users[i].phoneNumber<<endl;
-            cout<< "address : " << users[i].address<<endl;
-        }
-    }
-}
 bool Hotel::check_user_signup(string username)
 {
     for ( int index = 0 ; index < users.size() ; index ++ )
@@ -158,62 +114,18 @@ bool Hotel::check_user_signup(string username)
     } 
     return false;
 }
-bool Hotel::signup(string username,User *logged_user)
-{
-    string password, purse, phone, address; 
-    getline(cin , password);
-    getline(cin , purse);
-    getline(cin , phone);
-    getline(cin , address);
-    vector <string> pass(string_split(password));
-    vector <string> pur(string_split(purse));
-    vector <string> ph(string_split(phone));
-
-    if ( pass.size() != 1 || pur.size() != 1 || ph.size() != 1 || address.size() == 0)
-    {
-        return false;
-    }
-
-    int p = stoi(purse);
-
-    User new_user;
-    new_user.id = users.size();
-    new_user.admin = false;
-    new_user.name = username;
-    new_user.password = password;
-    new_user.purse = p;
-    new_user.address = address;
-    new_user.phoneNumber = phone;
-    logged_user->name = new_user.name;
-    logged_user->id = new_user.id;
-    logged_user->admin = new_user.admin;
-    logged_user->password = new_user.password;
-    logged_user->phoneNumber = new_user.phoneNumber;
-    logged_user->address = new_user.address;
-    logged_user->purse = new_user.purse;
-    users.push_back(new_user);
-
-    return true;
-}
 bool Hotel::signin(string username, string password)
 {
     for ( int index = 0 ; index < users.size() ; index ++ )
     {
         if ( users[index].name == username && users[index].password == password)
         {   
-            // logged_user->name = users[index].name;
-            // logged_user->id = users[index].id;
-            // logged_user->admin = users[index].admin;
-            // logged_user->password = users[index].password;
-            // logged_user->phoneNumber = users[index].phoneNumber;
-            // logged_user->address = users[index].address;
-            // logged_user->purse = users[index].purse;
             return true;
         }
     } 
     return false;
 }
-int Hotel:: signup_signin_handler(string input)
+int Hotel:: signup_signin_handler(string input, int fd)
 {
     vector <string> words(string_split(input));
     string command = words[0];
@@ -245,6 +157,10 @@ int Hotel:: signup_signin_handler(string input)
         }
         if ( signup_check == false)
         {
+            User new_user;
+            new_user.name = username;
+            new_user.fd = fd;
+            pre_user.push_back(new_user);
             err_311();
             return 1;
         }
@@ -256,172 +172,186 @@ int Hotel:: signup_signin_handler(string input)
     }
     return 0;
 }
+int setupServer(int port) 
+{
+    struct sockaddr_in address;
+    int server_fd;
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+    int opt = 1;
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(port);
+
+    int connected = bind(server_fd, (struct sockaddr *)&address, sizeof(address));
+    if(connected == -1)
+        return -1;
+    
+    listen(server_fd, 10);
+
+    return server_fd;
+}
+int acceptClient(int server_fd)
+{
+    int client_fd;
+    struct sockaddr_in client_address;
+    int address_len = sizeof(client_address);
+    client_fd = accept(server_fd, (struct sockaddr *)&client_address, (socklen_t*) &address_len);
+
+    return client_fd;
+}
+bool decode_server(struct server* server)
+{
+    string filename = "jsons/config.json";
+    ifstream file(filename);
+    Json::Value root;
+    Json::Reader reader;
+    bool parsingSuccessful = reader.parse( file, root );
+    if ( !parsingSuccessful )
+    {
+        cout << "Error parsing the string" << endl;
+    }
+    bool status = root["connected"].asBool();
+    if(status)
+    {
+        cout << "this port is already taken try another one" << endl;
+        // root["connected"] = true;
+        return false;
+    }
+    server->host = root["hostName"].asString();
+    server->port = root["commandChannelPort"].asInt();
+    return true;
+}
+int Hotel::find_pre_user(int fd)
+{
+    for (int i = 0; i < users.size() ; i++)
+    {
+        if(pre_user[i].fd == fd)
+        {
+            return i;
+        }
+    }
+}
+int Hotel::find_user(int fd)
+{
+    for (int i = 0; i < users.size() ; i++)
+    {
+        if(users[i].fd == fd)
+        {
+            return i;
+        }
+    }
+}
+int Hotel::signup(string buffer,int fd)
+{
+    int pre_index = find_pre_user(fd); 
+    string username = pre_user[pre_index].name;
+    vector <string> info(string_split(buffer));
+    if( buffer.size() != 4 )
+    {
+        err_503();
+        return 0;
+    }
+
+    int p = stoi(info[1]);
+
+    User new_user;
+    new_user.id = users.size();
+    new_user.admin = false;
+    new_user.name = username;
+    new_user.password = info[0];
+    new_user.purse = p;
+    new_user.address = info[3];
+    new_user.phoneNumber = info[2];
+    users.push_back(new_user);
+    
+    pre_user.erase(pre_user.begin() + pre_index);
+    return 2;
+}
 void Hotel::logout()
 {
     err_201();
     return; 
 }
-int Hotel:: handle_reservation_page(vector <string> commands,User *logged_user)
+bool Hotel::edit_information(string buffer,int fd)
 {
-    string number = commands[0];
-    if( commands.size() == 1 && number == "1" )
+    int index = find_user(fd);
+    vector <string> words(string_split(buffer));
+    if (users[index].admin == false)
     {
-        logged_user_information(logged_user);
-        return false;
-    }
-    else if( commands.size() == 1 && number == "2" )
-    {
-        if(logged_user->admin == true)
-        {
-            users_information();
-        }
-        else
-        {
-            err_403();
-        }
-        return false;
-    }
-    else if( commands.size() == 1 && number == "3" )
-    {
-        rooms_information(logged_user->admin);
-        return false;
-    }
-    else if( commands.size() == 1 && number == "4" )
-    {
-        
-    }
-    else if( commands.size() == 1 && number == "5" )
-    {
-        
-    }
-    else if( commands.size() == 1 && number == "6" )
-    {
-        
-    }
-    else if( commands.size() == 1 && number == "7" )
-    {
-        bool edit = edit_information(logged_user);
-        if ( edit == false)
+
+        if (words.size() != 3)
         {
             err_503();
+            return 2;
         }
-        else
-        {
-            err_312();
-        }
-        return false;
-    }
-    else if( commands.size() == 1 && number == "8" )
-    {
-        cout<<"leave room section:"<<endl;
-        string str_input;
-        getline(cin,str_input);
-        vector <string> words(string_split(str_input));
-        leave_room(words,logged_user);
-        return false;
-    }
-    else if( commands.size() == 1 && number == "9" )
-    {
-        if ( logged_user->admin == true)
-        {
-            cout<<"Room add,modify,remove:"<<endl;
-            string str_input;
-            getline(cin,str_input);
-            vector <string> words(string_split(str_input));
-            room_handler(words);
-        }
-        else
-        {
-            err_403();
-        }
-        return false;
-    }
-    else if( commands.size() == 1 && number == "0" )
-    {
-        logout();
-        return true;
+
+        users[index].password = words[0];
+        users[index].address = words[2];
+        users[index].phoneNumber = words[1];
+
+        err_312();
+        return 2;
     }
     else
     {
+        if ( words.size() != 1)
+        {
+            err_503();
+            return 2;
+        }
+
+        users[index].password = words[0];
+        return 2;
+    }
+
+}
+int Hotel::leave_room(string input_str,int fd)
+{   
+    int index = find_user(fd);
+    vector <string> commands(string_split(input_str));
+
+/*     if (users[index].admin == true && commands.size() == 2 && commands[0] == "room")
+    {
+        for ( int index = 0; index < rooms.size(); index ++)
+        {
+            if (rooms[index].number == commands[1] )
+            {
+                return 11;
+            }
+        }
+        err_101();
+        return 2;
+    } */
+    if (users[index].admin == false && commands.size() == 2 && commands[0] == "room")
+    {
+        for (int index = 0; index < rooms.size(); index ++)
+        {
+            if(commands[1] == rooms[index].number )
+            {
+                for(int j = 0; j< rooms[index].users.size(); j++)
+                {
+                    if( rooms[index].users[j].id == users[index].id)
+                    {
+                        rooms[index].capacity = rooms[index].capacity + rooms[index].users[j].numOfBeds;
+                        rooms[index].users.erase(rooms[index].users.begin() + j);
+                        err_413();
+                        return 2;
+                    }
+                }
+                err_102();
+                return 2;
+            }
+        }
         err_503();
-        return false;
-    }
-    return false;
-}
-void Hotel:: logged_user_information(User *logged_user)
-{
-    cout<<"*******************************"<<endl;
-    cout<< "Your information:"<<endl;
-    cout<< "id: "<<logged_user->id<<endl;
-    cout<< "name: "<<logged_user->name<<endl;
-    cout<< "admin: "<<logged_user->admin<<endl;
-    cout<< "password: "<<logged_user->password<<endl;
-    if (logged_user->admin == false)
-    {
-        cout<< "purse: "<<logged_user->purse<<endl;
-        cout<< "phoneNumber: "<<logged_user->phoneNumber<<endl;
-        cout<< "address: "<<logged_user->address<<endl;
-    }
-    cout<<"*******************************"<<endl;
-}
-void Hotel:: reservation_page()
-{
-    cout<< "###############################"<<endl;
-    cout<< "1. View user information"<<endl;
-    cout<< "2. View all users"<<endl;
-    cout<< "3. View rooms information"<<endl;
-    cout<< "4. Booking"<<endl;
-    cout<< "5. Canceling"<<endl;
-    cout<< "6. Pass day"<<endl;
-    cout<< "7. Edit infromation"<<endl;
-    cout<< "8. Leaving room"<<endl;
-    cout<< "9. Rooms"<<endl;
-    cout<< "0. Logout"<<endl;
-    cout<< "###############################"<<endl;
-}
-
-bool Hotel::edit_information(User *logged_user)
-{
-    int index = logged_user->id;
-    string password;
-    if (logged_user->admin == false)
-    {
-        string  phone, address;
-
-        getline(cin , password);
-        getline(cin , phone);
-        getline(cin , address);
-
-        vector <string> ph(string_split(phone));
-        vector <string> pass(string_split(password));
-
-        if ( pass.size() != 1 || ph.size() != 1 || address.size() == 0)
-        {
-            return false;
-        }
-
-        users[index].password = password;
-        logged_user->password = password;
-        users[index].address = address;
-        logged_user->address = address;
-        users[index].phoneNumber = phone;
-        logged_user->phoneNumber = phone;
-        return true;
-    }
-    else
-    {
-        getline(cin , password);
-        vector <string> pass(string_split(password));
-        if ( pass.size() != 1)
-        {
-            return false;
-        }
-
-        users[index].password = password;
-        logged_user->password = password;
-        return true;
+        return 2;
     }
 
+    err_503();
+    return 2;
+    
 }
 bool Hotel::modify_room(string room_number,int max_capacity,int price)
 {
@@ -473,8 +403,11 @@ bool Hotel::remove_room(string room_number)
     }
     return false; 
 }
-void Hotel::room_handler(vector <string> commands)
+int Hotel::room_handler(string buffer, int fd)
 {
+    int index = find_user(fd);
+    vector <string> commands(string_split(buffer));
+
     if ( commands.size()  == 4 && commands[0] == "add")
     {
         bool stat = add_room(commands[1],stoi(commands[2]),stoi(commands[3]));
@@ -515,160 +448,153 @@ void Hotel::room_handler(vector <string> commands)
     {
         err_503();
     }
+    return 2;
 }
-
-void Hotel::leave_room(vector <string> commands ,User *logged_user)
+int Hotel:: handle_reservation_page(string input_str, int fd)
 {
-    if (logged_user->admin == true && commands.size() == 2 && commands[0] == "room")
+    int index = find_user(fd);
+    vector <string> commands(string_split(input_str));
+    string number = commands[0];
+    if( commands.size() == 1 && number == "1" )
     {
-        for ( int index = 0; index < rooms.size(); index ++)
+        logged_user_information(fd);
+        return 2;
+    }
+    else if( commands.size() == 1 && number == "2" )
+    {
+        if(users[index].admin == true)
         {
-            if (rooms[index].number == commands[1] )
-            {
-                string input_str;
-                getline(cin, input_str);
-                vector <string> words(string_split(input_str));
-                if (words[0] == "capacity" && words.size() == 2)
-                {
-                    int cap = stoi(words[1]);
-                    if (cap == rooms[index].maxCapacity - rooms[index].capacity)
-                    {
-                        rooms[index].capacity = rooms[index].maxCapacity;
-                        rooms[index].users.clear();
-                        err_413();
-                        return;
-                    }
-                    else
-                    {
-                        err_412();
-                        return;
-                    }
-                }
-                else
-                {
-                    err_503();
-                    return;
-                }
-            }
+            users_information();
         }
-        err_101();
-        return;
-
+        else
+        {
+            err_403();
+        }
+        return 2;
+    }
+    else if( commands.size() == 1 && number == "3" )
+    {
+        rooms_information(users[index].admin);
+        return 2;
+    }
+    else if( commands.size() == 1 && number == "4" )
+    {
+        
+    }
+    else if( commands.size() == 1 && number == "5" )
+    {
+        
+    }
+    else if( commands.size() == 1 && number == "6" )
+    {
+        
+    }
+    else if( commands.size() == 1 && number == "7" )
+    {
+        return 7;
+    }
+    else if( commands.size() == 1 && number == "8" )
+    {
+        return 8;
+    }
+    else if( commands.size() == 1 && number == "9" )
+    {
+        return 9;
+    }
+    else if( commands.size() == 1 && number == "0" )
+    {
+        logout();
+        return 10;
     }
     else
     {
-        for (int index = 0; index < rooms.size(); index ++)
+        err_503();
+        return 2;
+    }
+    return 2;
+}
+
+//up done // down bug
+
+void Hotel::users_information()
+{
+    for ( int i = 0 ; i < users.size() ; i++)
+    {
+        cout<< endl;
+        cout<< "id : " << users[i].id<<endl;
+        cout<< "name : " << users[i].name<<endl;
+        cout<< "password : " << users[i].password<<endl;
+        cout<< "admin : " << users[i].admin<<endl;
+        if ( users[i].admin == false)
         {
-            if(commands[1] == rooms[index].number )
+            cout<< "purse : " << users[i].purse<<endl;
+            cout<< "phoneNumber : " << users[i].phoneNumber<<endl;
+            cout<< "address : " << users[i].address<<endl;
+        }
+    }
+}
+void Hotel::rooms_information(bool admin)
+{
+    for ( int i = 0 ; i < rooms.size() ; i++ )
+    {
+        cout<<endl;
+        cout<< "number : " << rooms[i].number<<endl;
+        cout<< "status : " << rooms[i].status<<endl;
+        cout<< "price : " << rooms[i].price<<endl;
+        cout<< "maxCapacity : " << rooms[i].maxCapacity<<endl;
+        cout<< "capacity : " << rooms[i].capacity<<endl;
+        if ( admin == true)
+        {
+            for ( int j = 0; j< rooms[i].users.size(); j++)
             {
-                for(int j = 0; j< rooms[index].users.size(); j++)
-                {
-                    if( rooms[index].users[j].id == logged_user->id)
-                    {
-                        rooms[index].capacity = rooms[index].capacity + rooms[index].users[j].numOfBeds;
-                        rooms[index].users.erase(rooms[index].users.begin() + j);
-                        err_413();
-                        return;
-                    }
-                }
-                err_102();
-                return;
+                cout<<endl;
+                cout<< "   id : " << rooms[i].users[j].id<<endl;
+                cout<< "   numbOfBeds : " << rooms[i].users[j].numOfBeds<<endl;
+                cout<< "   reserveDate : " << rooms[i].users[j].reserveDate<<endl;
+                cout<< "   checkoutDate : " << rooms[i].users[j].checkoutDate<<endl;
             }
         }
-        err_503();
-        return;
     }
-    return;
 }
-
-// void Hotel::procces()
-// {
-//     vector <User> users;
-//     vector <Room> rooms;
-//     Hotel myhotel(users,rooms);
-//     User logged_user;
-//     bool signup_signin_level = false;
-//     bool reservation_level = false;
-//     myhotel.decode_users();
-//     myhotel.decode_rooms();
-//     // myhotel.start_print();
-//     while(signup_signin_level != true)
-//     {
-//         string input_str;
-//         getline(cin, input_str);
-//         vector <string> words(string_split(input_str));
-//         signup_signin_level = myhotel.signup_signin_handler(words,&logged_user);
-//     }
-//     while(reservation_level != true)
-//     {
-//         string input_str;
-//         myhotel.reservation_page();
-//         getline(cin, input_str);
-//         vector <string> words(string_split(input_str));
-//         reservation_level = myhotel.handle_reservation_page(words,&logged_user);
-//     }
-// }
-
-int setupServer(int port) {
-    struct sockaddr_in address;
-    int server_fd;
-    server_fd = socket(AF_INET, SOCK_STREAM, 0);
-
-    int opt = 1;
-    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(port);
-
-    int connected = bind(server_fd, (struct sockaddr *)&address, sizeof(address));
-    if(connected == -1)
-        return -1;
-    
-    listen(server_fd, 10);
-
-    return server_fd;
-}
-
-int acceptClient(int server_fd) {
-    int client_fd;
-    struct sockaddr_in client_address;
-    int address_len = sizeof(client_address);
-    client_fd = accept(server_fd, (struct sockaddr *)&client_address, (socklen_t*) &address_len);
-
-    return client_fd;
-}
-
-bool decode_server(struct server* server)
+void Hotel:: logged_user_information(int fd)
 {
-    string filename = "jsons/config.json";
-    ifstream file(filename);
-    Json::Value root;
-    Json::Reader reader;
-    bool parsingSuccessful = reader.parse( file, root );
-    if ( !parsingSuccessful )
+    int index = find_user(fd);
+    cout<<"*******************************"<<endl;
+    cout<< "Your information:"<<endl;
+    cout<< "id: "<<users[index].id<<endl;
+    cout<< "name: "<<users[index].name<<endl;
+    cout<< "admin: "<<users[index].admin<<endl;
+    cout<< "password: "<<users[index].password<<endl;
+    if (users[index].admin == false)
     {
-        cout << "Error parsing the string" << endl;
+        cout<< "purse: "<<users[index].purse<<endl;
+        cout<< "phoneNumber: "<<users[index].phoneNumber<<endl;
+        cout<< "address: "<<users[index].address<<endl;
     }
-    bool status = root["connected"].asBool();
-    if(status)
-    {
-        cout << "this port is already taken try another one" << endl;
-        // root["connected"] = true;
-        return false;
-    }
-    server->host = root["hostName"].asString();
-    server->port = root["commandChannelPort"].asInt();
-    return true;
+    cout<<"*******************************"<<endl;
+}
+void Hotel:: reservation_page(int fd)
+{
+    cout<< "###############################"<<endl;
+    cout<< "1. View user information"<<endl;
+    cout<< "2. View all users"<<endl;
+    cout<< "3. View rooms information"<<endl;
+    cout<< "4. Booking"<<endl;
+    cout<< "5. Canceling"<<endl;
+    cout<< "6. Pass day"<<endl;
+    cout<< "7. Edit infromation"<<endl;
+    cout<< "8. Leaving room"<<endl;
+    cout<< "9. Rooms"<<endl;
+    cout<< "0. Logout"<<endl;
+    cout<< "###############################"<<endl;
 }
 
 int main(int argc, char const *argv[]) {
     vector <User> users;
     vector <Room> rooms;
-    Hotel myhotel(users,rooms);
+    vector <User> pre_user;
+    Hotel myhotel(users,rooms,pre_user);
     User logged_user;
-    bool signup_signin_level = false;
-    bool reservation_level = false;
     myhotel.decode_users();
     myhotel.decode_rooms();
 
@@ -689,7 +615,7 @@ int main(int argc, char const *argv[]) {
     max_sd = server.fd;
     FD_SET(server.fd, &master_set);
 
-    int sign_in [100];
+    int sections [100];
 
     //set date 
 
@@ -707,7 +633,7 @@ int main(int argc, char const *argv[]) {
                     if (new_socket > max_sd)
                         max_sd = new_socket;
                     myhotel.start_print(new_socket);
-                    sign_in[new_socket] = 0;
+                    sections[new_socket] = 0;
                     cout << "New client connected(fd =" << new_socket << ")" << endl;
                 }
                 
@@ -726,11 +652,28 @@ int main(int argc, char const *argv[]) {
                         continue;
                     }
                     
-                    if(sign_in[i] == 0)
-                        sign_in[i] = myhotel.signup_signin_handler(buffer);
-                    else if(sign_in[i] == 1)
+                    if(sections[i] == 0)
+                        sections[i] = myhotel.signup_signin_handler(buffer,i);
+                    else if(sections[i] == 1)
                     {
-                        // signup data
+                        sections[i] = myhotel.signup(buffer,i);
+                    }
+                    else if(sections[i] == 2)
+                    {
+                        myhotel.reservation_page(i);
+                        sections[i] = myhotel.handle_reservation_page(buffer,i);
+                    }
+                    else if(sections[i] == 7)
+                    {
+                        sections[i] = myhotel.edit_information(buffer,i);
+                    }
+                    else if(sections[i] == 8)
+                    {
+                        sections[i] = myhotel.leave_room(buffer,i);
+                    }
+                    else if(sections[i] == 9)
+                    {
+                        sections[i] = myhotel.room_handler(buffer,i);
                     }
                     cout << "client" << i << " said:" << buffer;
                     write(new_socket, "hello", 6);
