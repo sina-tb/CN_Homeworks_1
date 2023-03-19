@@ -226,7 +226,7 @@ bool decode_server(struct server* server)
 }
 int Hotel::find_pre_user(int fd)
 {
-    for (int i = 0; i < users.size() ; i++)
+    for (int i = 0; i < pre_user.size() ; i++)
     {
         if(pre_user[i].fd == fd)
         {
@@ -483,7 +483,7 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     else if( commands.size() == 1 && number == "5" )
     {
-        
+        return 5;
     }
     else if( commands.size() == 1 && number == "6" )
     {
@@ -513,9 +513,78 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     return 2;
 }
+int Hotel::cancel_reserve(string buffer, int fd)
+{
+    int index = find_user(fd);
+    vector <string> commands(string_split(buffer));
+    if ( commands[0] == "cancel" && commands.size() == 3)
+    {
+        int numOfBeds = stoi(commands[2]);
+        for( int i = 0; i< rooms.size(); i++)
+        {
+            if (rooms[i].number == commands[1])
+            {
+                for (int j = 0; j< rooms[i].users.size(); j++)
+                {
+                    if ( rooms[i].users[j].id == users[index].id && rooms[i].users[j].numOfBeds >= numOfBeds)
+                    {
+                        err_110();
+                        return 2;
+                    }
+                    else
+                    {
+                        err_102();
+                        return 2;
+                    }
+                }
+            }
+        }
+        err_101();
+        return 2;
+    }
+    else
+    {
+        err_401();
+        return 2;
+    }
+    return 2;
+
+}
+bool Hotel::get_server_time()
+{
+    string input_str;
+    cout<<"Enter the date:"<<endl;
+    cin>>input_str;
+    vector <string> commands(string_split(input_str));
+    if (commands[0] == "setTime" && commands.size() == 2)
+    {
+        
+    }
+    else
+    {
+        err_503();
+        return false;
+    }
+}
+
 
 //up done // down bug
 
+
+void Hotel::show_reserve(int fd)
+{
+    int index = find_user(fd);
+    for (int i = 0; i< rooms.size(); i++)
+    {
+        for (int j = 0; j< rooms[i].users.size(); j++)
+        {
+            if (rooms[i].users[j].id == users[index].id)
+            {
+                cout << "room number "<<rooms[i].number<<"with numOfBeds "<<rooms[i].users[j].numOfBeds <<endl;
+            }
+        }
+    }
+}
 void Hotel::users_information()
 {
     for ( int i = 0 ; i < users.size() ; i++)
@@ -662,6 +731,11 @@ int main(int argc, char const *argv[]) {
                     {
                         myhotel.reservation_page(i);
                         sections[i] = myhotel.handle_reservation_page(buffer,i);
+                    }
+                    else if(sections[i] == 5)
+                    {
+                        myhotel.show_reserve(i);
+                        sections[i] = myhotel.cancel_reserve(buffer,i);
                     }
                     else if(sections[i] == 7)
                     {
