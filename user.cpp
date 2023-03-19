@@ -76,8 +76,7 @@ int sign_user(int fd)
     read(0,buff,1024);
     string temp = buff;
     temp.pop_back();
-    cout << temp << "," << temp.size();
-    send(fd,buff, temp.size(),0);
+    send(fd,buff, strlen(buff) - 1,0);
     recv(fd,serverbuff,1024,0);
     vector <string> input(string_split(temp));
     string s_buff = serverbuff;
@@ -85,26 +84,33 @@ int sign_user(int fd)
     vector <string> sr_b(string_split(s_buff));  //
     if(input[0] == "signin")
     {
-        if(sr_b[0] == "230")
+        if(sr_b[0] == "230:")
             return 1;
     }
     else if (input[0] == "signup")
     {
-        if(sr_b[0] == "311")
+        if(sr_b[0] == "311:")
         {
             string data;
-            for(int i = 0;i < 3; i++)
+            char userdata[1024];
+            for(int i = 0;i < 4; i++)
             {
                 cin >> temp; //////change
-                data = data + " " + temp;
+                if(i == 0)
+                    data = temp;
+                else
+                    data = data + " " + temp;
             }
-            send(fd,data.c_str(),data.size(),0);
+            for(int i = 0; i < data.size();i++)
+                userdata[i] = data[i];
+            cout << userdata << endl;
+            send(fd,userdata,data.size(),0);
             memset(serverbuff,0,1024);
             recv(fd,serverbuff,1024,0);
             string s_buff(serverbuff);
             cout << s_buff << endl;
             vector <string> sr_b(string_split(s_buff));
-            if(sr_b[0] == "231")
+            if(sr_b[0] == "231:")
                 return 1;
         }
     }
@@ -116,7 +122,7 @@ int sign_user(int fd)
 int main(int argc, char const *argv[]) {
     struct server server;
     decode_server(&server);
-    int state = 0;
+    int state = -1;
 
     int fd;
     char buff[1024] = {0};
@@ -126,19 +132,32 @@ int main(int argc, char const *argv[]) {
 
     while(1)
     {
-        if(state == 0)
+        memset(buff,0,1024);
+        memset(serverbuff,0,1024);
+        if(state == -1)
         {   
             recv(fd,serverbuff,1024,0);
             cout << serverbuff;
-            state = sign_user(fd);
-            //continue???
+            state = 0;
+            continue;
         }
-        recv(fd,serverbuff,1024,0);
-        printf("server said:%s\n",serverbuff);
-        read(0,buff,1024);
-        send(fd, buff, strlen(buff), 0);
-        memset(buff,0,1024);
-        memset(serverbuff,0,1024);
+        else if(state == 0)
+        {
+            state = sign_user(fd);
+            continue;
+        }
+        else if(state == 1)
+        {
+            recv(fd,serverbuff,1024,0); //recive menu
+            cout << serverbuff;
+            
+        }
+
+
+        // recv(fd,serverbuff,1024,0);
+        // printf("server said:%s\n",serverbuff);
+        // read(0,buff,1024);
+        // send(fd, buff, strlen(buff), 0);
     }
     return 0;
 }

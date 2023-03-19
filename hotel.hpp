@@ -30,6 +30,7 @@ public:
     void users_information();
     void reservation_page(int fd);
     int handle_reservation_page(string buffer, int fd);
+    void logout(int fd);
     void logged_user_information(int fd);
 
     void logout();
