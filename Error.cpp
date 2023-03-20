@@ -50,7 +50,7 @@ void err_111(int fd)
 void err_201(int fd)
 {
     cout<<"201: User logged out successfully."<<endl;   
-    write(fd,"201: User logged out successfully.",35);
+    write(fd,"201: User logged out successfully.\n",36);
 }
 void err_230(int fd)
 {
@@ -106,6 +106,6 @@ void err_451(int fd)
 void err_503(int fd)
 {
     cout<<"503: Bad sequence of commands"<<endl;   
-    write(fd,"503: Bad sequence of commands",30);
+    write(fd,"503: Bad sequence of commands\n",31);
 }
 

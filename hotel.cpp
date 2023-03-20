@@ -509,12 +509,12 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     else if( commands.size() == 1 && number == "0" )
     {
         err_201(fd);
-        // logout(fd);
         return 10;
     }
     else
     {
         err_503(fd);
+        reservation_page(fd);
         return 2;
     }
     return 2;
