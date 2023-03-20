@@ -79,3 +79,42 @@ User:
 Errors: All errors and messages the server may send to users. each error has a function to send the error message to user.
 
 ## Code verify
+
+### User:
+#### signup part:
+
+![1](https://user-images.githubusercontent.com/88041997/226328386-f2410ce7-a84d-4d1f-adc5-2258e14af768.png)
+
+#### other commands of signup:
+
+![2](https://user-images.githubusercontent.com/88041997/226328400-90918d1b-64bb-42eb-9f16-ea92040fb441.png)
+
+#### view user information:
+
+![3](https://user-images.githubusercontent.com/88041997/226328412-22d1a7a6-075b-4d83-ab98-9d97575ad2e8.png)
+
+#### view all users: 
+
+![4](https://user-images.githubusercontent.com/88041997/226328425-466f479a-5910-422b-a527-c88794c50d7d.png)
+
+#### view rooms information:
+
+![5](https://user-images.githubusercontent.com/88041997/226328442-dfe2d5ef-6180-4dcf-98ff-27a09cb43b85.png)
+
+### Admin:
+
+#### signin part:
+
+![6](https://user-images.githubusercontent.com/88041997/226328987-6b0e0bf1-f84a-449d-80a8-32277a2197a8.png)
+
+#### view user information:
+
+![7](https://user-images.githubusercontent.com/88041997/226328999-78e52566-7d28-44fe-9b55-32958a3af895.png)
+
+#### view all users:
+
+![8](https://user-images.githubusercontent.com/88041997/226329029-67cbd851-a64e-4a55-8232-a8cc76615eb5.png)
+
+#### view rooms information:
+
+![9](https://user-images.githubusercontent.com/88041997/226329053-1334ac09-dc50-48ba-ac1c-88b9c8346cc5.png)
