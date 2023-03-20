@@ -42,6 +42,8 @@ public:
     int admin_leave_room(string buffer,int fd);
     int cancel_reserve(string buffer, int fd);
     void show_reserve(int fd);
+    void encode_users();
+    void encode_rooms();
     
 };
 

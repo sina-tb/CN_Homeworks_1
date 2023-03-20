@@ -38,6 +38,37 @@ void Hotel::start_print(int fd)
 {
     write(fd,"Welcome\nPlease signup or signin to hotel first\n",48);
 }
+void Hotel::encode_users()
+{
+    string filename = "jsons/UsersInfo.json";
+    ifstream file(filename);
+    Json::Value root;
+
+    for ( int index = 0; index < users.size(); ++index )
+    {
+        Json::Value elements;
+        elements["id"] = users[index].id;
+        elements["user"] = users[index].name;
+        elements["password"] = users[index].password;
+        elements["admin"] = users[index].admin;
+        if( users[index].admin == false)
+        {
+            elements["purse"] = users[index].purse;
+            elements["phoneNumber"] = users[index].phoneNumber;
+            elements["address"] = users[index].address;
+        }
+
+        root.append(elements);
+    }
+
+    Json::StreamWriterBuilder builder;
+    builder["commentStyle"] = "None";
+    builder["indentation"] = "   ";
+
+    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+    std::ofstream outputFileStream(filename);
+    writer -> write(root, &outputFileStream);
+}
 void Hotel::decode_users()
 {
     string filename = "jsons/UsersInfo.json";
@@ -67,6 +98,40 @@ void Hotel::decode_users()
 
         users.push_back(new_user);
     }
+}
+void Hotel::encode_rooms()
+{
+    string filename = "jsons/RoomsInfo.json";
+    ifstream file(filename);
+    Json::Value root;
+
+    for ( int index = 0; index < rooms.size(); ++index )
+    {
+        Json::Value elements;
+        elements["number"] = rooms[index].number;
+        elements["status"] = rooms[index].status;
+        elements["price"] = rooms[index].price;
+        elements["maxCapacity"] = rooms[index].maxCapacity;
+        elements["capacity"] = rooms[index].capacity;
+        for ( int i = 0; i < rooms[index].users.size(); ++i)
+        {
+            Json::Value user_in_room;
+            user_in_room["id"] = rooms[index].users[i].id;
+            user_in_room["numOfBeds"] = rooms[index].users[i].numOfBeds;
+            user_in_room["reserveDate"] = rooms[index].users[i].reserveDate;
+            user_in_room["checkoutDate"] = rooms[index].users[i].checkoutDate;
+            elements["users"].append(user_in_room);
+        }
+        root["rooms"].append(elements);
+    }
+
+    Json::StreamWriterBuilder builder;
+    builder["commentStyle"] = "None";
+    builder["indentation"] = "   ";
+
+    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+    std::ofstream outputFileStream(filename);
+    writer -> write(root, &outputFileStream);
 }
 void Hotel::decode_rooms()
 {
@@ -267,6 +332,7 @@ int Hotel::signup(string buffer,int fd)
     users.push_back(new_user);
     
     pre_user.erase(pre_user.begin() + pre_index);
+    encode_users();
     err_231(fd);
     reservation_page(fd);
     return 2;
@@ -292,7 +358,8 @@ bool Hotel::edit_information(string buffer,int fd)
         users[index].password = words[0];
         users[index].address = words[2];
         users[index].phoneNumber = words[1];
-
+        
+        encode_users();
         err_312(fd);
         return 2;
     }
@@ -338,6 +405,7 @@ int Hotel::leave_room(string input_str,int fd)
                     {
                         rooms[index].capacity = rooms[index].capacity + rooms[index].users[j].numOfBeds;
                         rooms[index].users.erase(rooms[index].users.begin() + j);
+                        encode_rooms();
                         err_413(fd);
                         return 2;
                     }
@@ -418,6 +486,7 @@ int Hotel::room_handler(string buffer, int fd)
         }
         else
         {
+            encode_rooms();
             err_104(fd);
         }
     }
@@ -430,6 +499,7 @@ int Hotel::room_handler(string buffer, int fd)
         }
         else
         {
+            encode_rooms();
             err_105(fd);
         }
     }
@@ -442,6 +512,7 @@ int Hotel::room_handler(string buffer, int fd)
         }
         else
         {
+            encode_rooms();
             err_106(fd);
         }
     }
