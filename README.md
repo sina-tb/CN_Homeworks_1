@@ -43,7 +43,12 @@
   Hotel:
    * decode_users : a func to decode users information from json file
    * decode_rooms : a func to decode rooms information from json file
-   * decode_server: a func to decode server information from json file 
+   * encode_users : a func to encode users information to jason file
+   * encode_rooms : a func to encode rooms information to jason file
+   * decode_server: a func to decode server information from json file
+   * setupServer : a func to setup a server in tcp/ip protocol
+   * acceptClient : a func to accept a user that wants to join to server
+   * 
    * start_print : a func to show a message for every users when they connect or hotel server
    * find_pre_user : a func to find user information before signup or signin based on the given fd by server
    * find_user : a func to find user information after signup or signin based on the given fd by server
@@ -66,6 +71,11 @@
    * show_reserve : a func for printing reservations of the user
    * logout : a func that allows users and admin to leave the hotel service server
 
-  
+User:
+   * connectServer: a func that lets user to connect to hotel server
+   * decode_server: a func that decodes the server information from json file
+   * sign_user: a func to manage process of signup from user side
+
+Errors: All errors and messages the server may send to users. each error has a function to send the error message to user.
 
 ## Code verify
