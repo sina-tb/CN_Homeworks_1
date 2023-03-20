@@ -2,6 +2,7 @@
 #include <vector>
 #include "user.hpp"
 #include "room.hpp"
+#include <fstream>
 
 using namespace std;
 
@@ -12,7 +13,8 @@ public:
 
     vector <User> users;
     vector <Room> rooms;
-    vector <User> pre_user;          
+    vector <User> pre_user;   
+    fstream serverLog;      
 
     Hotel(vector <User> usr, vector <Room> ro,vector <User> pre);
 

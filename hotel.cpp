@@ -202,13 +202,13 @@ int Hotel:: signup_signin_handler(string input, int fd)
         bool signin_check = signin(username , password, fd);
         if ( signin_check == true)
         {
-            err_230(fd);
+            err_230(fd,serverLog);
             reservation_page(fd);
             return 2;
         }
         if ( signin_check == false)
         {   
-            err_430(fd);
+            err_430(fd,serverLog);
             return 0;
         }
     }
@@ -218,7 +218,7 @@ int Hotel:: signup_signin_handler(string input, int fd)
         bool signup_check = check_user_signup(username);
         if (signup_check == true)
         {
-            err_451(fd);
+            err_451(fd,serverLog);
             return 0;
         }
         if ( signup_check == false)
@@ -227,13 +227,13 @@ int Hotel:: signup_signin_handler(string input, int fd)
             new_user.name = username;
             new_user.fd = fd;
             pre_user.push_back(new_user);
-            err_311(fd);
+            err_311(fd,serverLog);
             return 1;
         }
     }
     else
     {
-        err_503(fd);
+        err_503(fd,serverLog);
         return 0;
     }
     return 0;
@@ -299,6 +299,7 @@ int Hotel::find_pre_user(int fd)
             return i;
         }
     }
+    return -1;
 }
 int Hotel::find_user(int fd)
 {
@@ -309,6 +310,7 @@ int Hotel::find_user(int fd)
             return i;
         }
     }
+    return -1;
 }
 int Hotel::signup(string buffer,int fd)
 {
@@ -317,7 +319,7 @@ int Hotel::signup(string buffer,int fd)
     vector <string> info(string_split(buffer));
     if( info.size() != 4 )
     {
-        err_503(fd);
+        err_503(fd,serverLog);
         return 0;
     }
     int p = stoi(info[1]);
@@ -335,7 +337,7 @@ int Hotel::signup(string buffer,int fd)
     
     pre_user.erase(pre_user.begin() + pre_index);
     encode_users();
-    err_231(fd);
+    err_231(fd,serverLog);
     reservation_page(fd);
     return 2;
 }
@@ -343,7 +345,7 @@ void Hotel::logout(int fd)
 {
     int index=find_user(fd);
     users[index].fd = -1;
-    err_201(fd);
+    err_201(fd,serverLog);
     return; 
 }
 int Hotel::edit_information(string buffer,int fd)
@@ -355,7 +357,7 @@ int Hotel::edit_information(string buffer,int fd)
 
         if (words.size() != 3)
         {
-            err_503(fd);
+            err_503(fd,serverLog);
             return 2;
         }
 
@@ -364,20 +366,20 @@ int Hotel::edit_information(string buffer,int fd)
         users[index].phoneNumber = words[1];
         
         encode_users();
-        err_312(fd);
+        err_312(fd,serverLog);
         return 2;
     }
     else
     {
         if ( words.size() != 1)
         {
-            err_503(fd);
+            err_503(fd,serverLog);
             return 2;
         }
 
         users[index].password = words[0];
         encode_users();
-        err_312(fd);
+        err_312(fd,serverLog);
         return 2;
     }
 
@@ -399,19 +401,19 @@ int Hotel::leave_room(string input_str,int fd)
                         rooms[index].capacity = rooms[index].capacity + rooms[index].users[j].numOfBeds;
                         rooms[index].users.erase(rooms[index].users.begin() + j);
                         encode_rooms();
-                        err_413(fd);
+                        err_413(fd,serverLog);
                         return 2;
                     }
                 }
-                err_102(fd);
+                err_102(fd,serverLog);
                 return 2;
             }
         }
-        err_503(fd);
+        err_503(fd,serverLog);
         return 2;
     }
 
-    err_503(fd);
+    err_503(fd,serverLog);
     return 2;
     
 }
@@ -475,12 +477,12 @@ int Hotel::room_handler(string buffer, int fd)
         bool stat = add_room(commands[1],stoi(commands[2]),stoi(commands[3]));
         if ( stat == false )
         {
-            err_111(fd);
+            err_111(fd,serverLog);
         }
         else
         {
             encode_rooms();
-            err_104(fd);
+            err_104(fd,serverLog);
         }
     }
     else if( commands.size() == 4 && commands[0] == "modify")
@@ -488,12 +490,12 @@ int Hotel::room_handler(string buffer, int fd)
         bool stat = modify_room(commands[1],stoi(commands[2]),stoi(commands[3]));
         if (stat == false)
         {
-            err_101(fd);
+            err_101(fd,serverLog);
         }
         else
         {
             encode_rooms();
-            err_105(fd);
+            err_105(fd,serverLog);
         }
     }
     else if( commands.size() == 2 && commands[0] == "remove")
@@ -501,17 +503,17 @@ int Hotel::room_handler(string buffer, int fd)
         bool stat = remove_room(commands[1]);
         if ( stat == false)
         {
-            err_101(fd);
+            err_101(fd,serverLog);
         }
         else
         {
             encode_rooms();
-            err_106(fd);
+            err_106(fd,serverLog);
         }
     }
     else
     {
-        err_503(fd);
+        err_503(fd,serverLog);
     }
     return 2;
 }
@@ -534,7 +536,7 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
         }
         else
         {
-            err_403(fd);
+            err_403(fd,serverLog);
         }
         reservation_page(fd);
         return 2;
@@ -573,7 +575,7 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     {
         if(users[index].admin == false)
         {
-            err_403(fd);
+            err_403(fd,serverLog);
             reservation_page(fd);
             return 2;
         }
@@ -587,7 +589,7 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     else
     {
-        err_503(fd);
+        err_503(fd,serverLog);
         reservation_page(fd);
         return 2;
     }
@@ -612,7 +614,7 @@ int Hotel::show_reserve(int fd)
     }
     if( num == 0)
     {
-        err_102(fd);
+        err_102(fd,serverLog);
         reservation_page(fd);
         return 2;
     }
@@ -650,20 +652,20 @@ int Hotel::cancel_reserve(string buffer, int fd)
                         if(rooms[i].status == 1)
                             rooms[i].status = 0;
                         encode_rooms();
-                        err_110(fd);
+                        err_110(fd,serverLog);
                         return 2;
                     }
                 }
-                err_102(fd);
+                err_102(fd,serverLog);
                 return 2;
             }
         }
-        err_101(fd);
+        err_101(fd,serverLog);
         return 2;
     }
     else
     {
-        err_401(fd);
+        err_401(fd,serverLog);
         return 2;
     }
     return 2;
@@ -769,7 +771,7 @@ int Hotel::room_information_handler(string buffer, int fd)
     }
     else
     {
-        err_503(fd);
+        err_503(fd,serverLog);
     }   
     return 2;
 }
@@ -823,6 +825,9 @@ int main(int argc, char const *argv[]) {
     User logged_user;
     myhotel.decode_users();
     myhotel.decode_rooms();
+    myhotel.serverLog.open("serverLog.txt",fstream::out| fstream::app);
+
+
 
     struct server server;
     decode_server(&server);
@@ -833,6 +838,7 @@ int main(int argc, char const *argv[]) {
     if(server.fd == -1)
     {
         cout << "this port is already in use"<< endl;
+        myhotel.serverLog << "this port is already in use"<< endl;
         return 0;
     }   
     FD_ZERO(&master_set);
@@ -840,8 +846,6 @@ int main(int argc, char const *argv[]) {
     FD_SET(server.fd, &master_set);
 
     int sections [100];
-
-    //set date 
 
 
     while (1) {
@@ -859,6 +863,7 @@ int main(int argc, char const *argv[]) {
                     myhotel.start_print(new_socket);
                     sections[new_socket] = 0;
                     cout << "New client connected(fd =" << new_socket << ")" << endl;
+                    myhotel.serverLog << "New client connected(fd =" << new_socket << ")" << endl;
                 }
                 
                 else { // client sending msg
@@ -869,11 +874,12 @@ int main(int argc, char const *argv[]) {
 
                     if (bytes_received == 0) { // EOF
                         printf("client fd = %d closed\n", i);
+                        myhotel.serverLog <<"client fd = "<< i << "closed"<< endl;
                         close(i);
                         FD_CLR(i, &master_set);
                         continue;
                     }
-
+                    myhotel.serverLog << "client fd" << i << ":" << buffer << endl;
                     if( sections[i] == 0 )
                     {
                         sections[i] = myhotel.signup_signin_handler(buffer,i);
@@ -911,12 +917,12 @@ int main(int argc, char const *argv[]) {
                         sections[i] = myhotel.room_information_handler(buffer,i);
                         myhotel.reservation_page(i);
                     }
-                    // cout << "client" << i << " said:" << buffer;
                     buffer = "";
                     memset(temp_buff,0,2048);
                 }
             }
         }
     }
+    myhotel.serverLog.close();
     return 0;
 }

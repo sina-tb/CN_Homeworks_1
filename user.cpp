@@ -13,7 +13,7 @@
 #include <jsoncpp/json/json.h>
 #include <fstream>
 #include <sstream>
-
+#include<sys/stat.h>
 using namespace std;
 
 struct server 
@@ -68,7 +68,7 @@ vector <string> string_split(string input_str)
     return words;
 }
 
-int sign_user(int fd)
+int sign_user(int fd,string & username)
 {
     char serverbuff [1024];
     char buff[1024];
@@ -80,12 +80,15 @@ int sign_user(int fd)
     recv(fd,serverbuff,1024,0);
     vector <string> input(string_split(temp));
     string s_buff = serverbuff;
-    cout << s_buff << endl;
+    cout << s_buff;
     vector <string> sr_b(string_split(s_buff));  //
     if(input[0] == "signin")
     {
         if(sr_b[0] == "230:")
+        {
+            username = input[1];
             return 1;
+        }
     }
     else if (input[0] == "signup")
     {
@@ -110,13 +113,16 @@ int sign_user(int fd)
             cout << s_buff << endl;
             vector <string> sr_b(string_split(s_buff));
             if(sr_b[0] == "231:")
+            {
+                username = input[1];
                 return 1;
+            }
         }
     }
     return 0;
 }
 
-int edit_info(int fd,bool admin)
+int edit_info(int fd,bool admin,fstream& userLog)
 {
     string data, temp;
     char userdata[1024];
@@ -134,9 +140,11 @@ int edit_info(int fd,bool admin)
     for(int i = 0; i < data.size();i++)
         userdata[i] = data[i];
     send(fd,userdata,data.size(),0);
+    userLog << data << endl;
     char serverbuff[1024];
     recv(fd,serverbuff,1024,0);
     cout << serverbuff << endl;
+    userLog << serverbuff;
     return 1;
 }
 
@@ -146,13 +154,16 @@ int main(int argc, char const *argv[]) {
     struct server server;
     decode_server(&server);
     int state = -1;
+    bool admin;
+    string username;
 
     int fd;
     char buff[1024] = {0};
     char serverbuff[1024] = {0};
     char menubuff[8192] = {0};
 
-    bool admin;
+    fstream userLog;
+    mkdir("usersLog",0777);
 
     fd = connectServer(server);
 
@@ -170,7 +181,12 @@ int main(int argc, char const *argv[]) {
         }
         else if(state == 0)
         {
-            state = sign_user(fd);
+            state = sign_user(fd,username);
+            if(state == 1)
+            {
+                string filename = "usersLog/" + username + ".txt";
+                userLog.open(filename,fstream::out| fstream::app);
+            }
             continue;
         }
         else if(state == 1)
@@ -179,8 +195,10 @@ int main(int argc, char const *argv[]) {
             cout << serverbuff;
             read(0,buff,1024);
             send(fd, buff, strlen(buff) - 1, 0);
+            userLog << buff;
             recv(fd,menubuff,8192,0);
             cout << menubuff ;
+            userLog << menubuff;
             if(buff[0] == '0' && strlen(buff) == 2)
                 return 0;
             else if(buff[0] == '3' && strlen(buff) == 2)
@@ -212,43 +230,47 @@ int main(int argc, char const *argv[]) {
         {
             read(0,buff,1024);
             send(fd, buff, strlen(buff) - 1, 0);
+            userLog << buff;
             recv(fd,menubuff,8192,0);
             cout << menubuff ;
+            userLog << menubuff;
             state = 1;
         }
         else if(state == 5)
         {
             read(0,buff,1024);
             send(fd, buff, strlen(buff) - 1, 0);
+            userLog << buff;
             recv(fd,menubuff,8192,0);
             cout << menubuff ;
+            userLog << menubuff;
             state = 1;
         }
         else if(state == 7)
         {
-            edit_info(fd, admin);
+            edit_info(fd, admin, userLog);
             state = 1;
         }
         else if(state == 8)
         {
             read(0,buff,1024);
             send(fd, buff, strlen(buff) - 1, 0);
+            userLog << buff;
             recv(fd,menubuff,8192,0);
             cout << menubuff ;
+            userLog << menubuff;
             state = 1;
         }
         else if(state == 9)
         {
             read(0,buff,1024);
             send(fd, buff, strlen(buff) - 1, 0);
+            userLog << buff;
             recv(fd,menubuff,8192,0);
             cout << menubuff ;
+            userLog << menubuff;
             state = 1;
         }
-        // recv(fd,serverbuff,1024,0);
-        // printf("server said:%s\n",serverbuff);
-        // read(0,buff,1024);
-        // send(fd, buff, strlen(buff), 0);
     }
     return 0;
 }
