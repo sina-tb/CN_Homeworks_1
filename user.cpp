@@ -183,6 +183,15 @@ int main(int argc, char const *argv[]) {
             cout << menubuff ;
             if(buff[0] == '0' && strlen(buff) == 2)
                 return 0;
+            else if(buff[0] == '3' && strlen(buff) == 2)
+            {
+                state = 3;
+            }
+            else if(buff[0] == '5' && strlen(buff) == 2)
+            {
+                if(menubuff[0] != '1')
+                    state = 5;
+            }
             else if(buff[0] == '7' && strlen(buff) == 2)
             {
                 if(strlen(menubuff) == 31)
@@ -198,6 +207,22 @@ int main(int argc, char const *argv[]) {
                 if(menubuff[0] != '4')
                     state = 9;
             }
+        }
+        else if(state == 3)
+        {
+            read(0,buff,1024);
+            send(fd, buff, strlen(buff) - 1, 0);
+            recv(fd,menubuff,8192,0);
+            cout << menubuff ;
+            state = 1;
+        }
+        else if(state == 5)
+        {
+            read(0,buff,1024);
+            send(fd, buff, strlen(buff) - 1, 0);
+            recv(fd,menubuff,8192,0);
+            cout << menubuff ;
+            state = 1;
         }
         else if(state == 7)
         {

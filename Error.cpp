@@ -109,3 +109,12 @@ void err_503(int fd)
     write(fd,"503: Bad sequence of commands\n",31);
 }
 
+        // "users":
+        // [
+        //     {
+        //         "id":1,
+        //         "numOfBeds":1,
+        //         "reserveDate":"25-02-2023",
+        //         "checkoutDate":"27-02-2023"
+        //     }
+        // ]

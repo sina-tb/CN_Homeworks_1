@@ -541,8 +541,7 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     else if( commands.size() == 1 && number == "3" )
     {
-        cout<<"1- empty rooms"<<endl;
-        cout<<"2- all rooms"<<endl;
+        write(fd,"1- empty rooms\n2- all rooms\n",29);
         return 12;
     }
     else if( commands.size() == 1 && number == "4" )
@@ -551,7 +550,7 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     else if( commands.size() == 1 && number == "5" )
     {
-        return 5;
+        return show_reserve(fd);
     }
     else if( commands.size() == 1 && number == "6" )
     {
@@ -594,19 +593,41 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     return 2;
 }
-void Hotel::show_reserve(int fd)
+int Hotel::show_reserve(int fd)
 {
     int index = find_user(fd);
+    string data = "\n";
+    int num = 0;
     for ( int i = 0 ; i< rooms.size() ; i ++)
     {
         for ( int j = 0 ; j< rooms[i].users.size() ; j++)
         {
             if ( rooms[i].users[j].id == users[index].id)
             {
-                cout<< "reserved number "<<rooms[i].number << " with "<<rooms[i].users[i].numOfBeds<< " beds"<<endl;
+                num ++;
+                // cout<< "reserved number "<<rooms[i].number << " with "<<rooms[i].users[i].numOfBeds<< " beds"<<endl;
+                data = data + "reserved number " + rooms[i].number + "with " + to_string(rooms[i].users[j].numOfBeds) + "beds\n";
             }
         }
     }
+    if( num == 0)
+    {
+        err_102(fd);
+        reservation_page(fd);
+        return 2;
+    }
+    else
+    {
+        char res_data [1024];
+        for(int i = 0; i < data.size(); i++)
+        {
+            res_data[i] = data[i];
+        }
+        write(fd,res_data,data.size());
+        return 5;
+    }
+
+
 }
 int Hotel::cancel_reserve(string buffer, int fd)
 {
@@ -625,15 +646,16 @@ int Hotel::cancel_reserve(string buffer, int fd)
                     {
                         users[index].purse = users[index].purse + (rooms[i].price/2);
                         rooms[i].users.erase(rooms[i].users.begin() + j);
+                        rooms[i].capacity += numOfBeds;
+                        if(rooms[i].status == 1)
+                            rooms[i].status = 0;
+                        encode_rooms();
                         err_110(fd);
                         return 2;
                     }
-                    else
-                    {
-                        err_102(fd);
-                        return 2;
-                    }
                 }
+                err_102(fd);
+                return 2;
             }
         }
         err_101(fd);
@@ -866,8 +888,8 @@ int main(int argc, char const *argv[]) {
                     }
                     else if(sections[i] == 5)
                     {
-                        myhotel.show_reserve(i);
                         sections[i] = myhotel.cancel_reserve(buffer,i);
+                        myhotel.reservation_page(i);
                     }
                     else if(sections[i] == 7)
                     {
@@ -882,6 +904,11 @@ int main(int argc, char const *argv[]) {
                     else if(sections[i] == 9)
                     {
                         sections[i] = myhotel.room_handler(buffer,i);
+                        myhotel.reservation_page(i);
+                    }
+                    else if(sections[i] == 12)
+                    {
+                        sections[i] = myhotel.room_information_handler(buffer,i);
                         myhotel.reservation_page(i);
                     }
                     // cout << "client" << i << " said:" << buffer;
