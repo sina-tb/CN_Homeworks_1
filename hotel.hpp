@@ -15,18 +15,20 @@ public:
     vector <User> pre_user;          
 
     Hotel(vector <User> usr, vector <Room> ro,vector <User> pre);
-    int find_pre_user(int fd);
-    int find_user(int fd);
+
     void decode_users();
     void decode_rooms();
     void decode_server();
-    void rooms_information(bool admin, int fd);
+    void rooms_information(bool admin,int fd);
     void users_information(int fd);
     int signup_signin_handler(string input,int fd);
-    void start_print(int fd);
-    bool signin(string username , string password);
+    int find_pre_user(int fd);
+    int find_user(int fd);
+    bool signin(string username , string password,int fd);
     int signup(string buffer,int fd);
     bool check_user_signup(string username);
+    void rooms_information(bool admin);
+    void users_information();
     void reservation_page(int fd);
     int handle_reservation_page(string buffer, int fd);
     void logout(int fd);
@@ -39,6 +41,11 @@ public:
     int leave_room(string input_str,int fd);
     void procces();
     int admin_leave_room(string buffer,int fd);
+    int cancel_reserve(string buffer, int fd);
+    void show_reserve(int fd);
+    void encode_users();
+    void encode_rooms();
+    void start_print(int fd);
     
 };
 

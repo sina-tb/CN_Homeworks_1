@@ -38,6 +38,36 @@ void Hotel::start_print(int fd)
 {
     write(fd,"Welcome\nPlease signup or signin to hotel first\n",48);
 }
+void Hotel::encode_users()
+{
+    string filename = "jsons/UsersInfo.json";
+    ifstream file(filename);
+    Json::Value root;
+    for ( int index = 0; index < users.size(); ++index )
+    {
+        Json::Value elements;
+        elements["id"] = users[index].id;
+        elements["user"] = users[index].name;
+        elements["password"] = users[index].password;
+        elements["admin"] = users[index].admin;
+        if( users[index].admin == false)
+        {
+            elements["purse"] = users[index].purse;
+            elements["phoneNumber"] = users[index].phoneNumber;
+            elements["address"] = users[index].address;
+        }
+
+        root["users"].append(elements);
+    }
+
+    Json::StreamWriterBuilder builder;
+    builder["commentStyle"] = "None";
+    builder["indentation"] = "   ";
+
+    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+    std::ofstream outputFileStream(filename);
+    writer -> write(root, &outputFileStream);
+}
 void Hotel::decode_users()
 {
     string filename = "jsons/UsersInfo.json";
@@ -54,6 +84,7 @@ void Hotel::decode_users()
     for ( int index = 0; index < elements.size(); ++index )
     {
         User new_user;
+        new_user.fd = -1;
         new_user.id = elements[index]["id"].asInt();
         new_user.name = elements[index]["user"].asString();
         new_user.password  = elements[index]["password"].asString();
@@ -67,6 +98,40 @@ void Hotel::decode_users()
 
         users.push_back(new_user);
     }
+}
+void Hotel::encode_rooms()
+{
+    string filename = "jsons/RoomsInfo.json";
+    ifstream file(filename);
+    Json::Value root;
+
+    for ( int index = 0; index < rooms.size(); ++index )
+    {
+        Json::Value elements;
+        elements["number"] = rooms[index].number;
+        elements["status"] = rooms[index].status;
+        elements["price"] = rooms[index].price;
+        elements["maxCapacity"] = rooms[index].maxCapacity;
+        elements["capacity"] = rooms[index].capacity;
+        for ( int i = 0; i < rooms[index].users.size(); ++i)
+        {
+            Json::Value user_in_room;
+            user_in_room["id"] = rooms[index].users[i].id;
+            user_in_room["numOfBeds"] = rooms[index].users[i].numOfBeds;
+            user_in_room["reserveDate"] = rooms[index].users[i].reserveDate;
+            user_in_room["checkoutDate"] = rooms[index].users[i].checkoutDate;
+            elements["users"].append(user_in_room);
+        }
+        root["rooms"].append(elements);
+    }
+
+    Json::StreamWriterBuilder builder;
+    builder["commentStyle"] = "None";
+    builder["indentation"] = "   ";
+
+    std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+    std::ofstream outputFileStream(filename);
+    writer -> write(root, &outputFileStream);
 }
 void Hotel::decode_rooms()
 {
@@ -114,12 +179,13 @@ bool Hotel::check_user_signup(string username)
     } 
     return false;
 }
-bool Hotel::signin(string username, string password)
+bool Hotel::signin(string username, string password,int fd)
 {
     for ( int index = 0 ; index < users.size() ; index ++ )
     {
         if ( users[index].name == username && users[index].password == password)
         {   
+            users[index].fd = fd;
             return true;
         }
     } 
@@ -133,7 +199,7 @@ int Hotel:: signup_signin_handler(string input, int fd)
     {
         string username = words[1];
         string password = words[2];
-        bool signin_check = signin(username , password);
+        bool signin_check = signin(username , password, fd);
         if ( signin_check == true)
         {
             err_230(fd);
@@ -226,7 +292,7 @@ bool decode_server(struct server* server)
 }
 int Hotel::find_pre_user(int fd)
 {
-    for (int i = 0; i < users.size() ; i++)
+    for (int i = 0; i < pre_user.size() ; i++)
     {
         if(pre_user[i].fd == fd)
         {
@@ -257,6 +323,7 @@ int Hotel::signup(string buffer,int fd)
     int p = stoi(info[1]);
 
     User new_user;
+    new_user.fd = fd;
     new_user.id = users.size();
     new_user.admin = false;
     new_user.name = username;
@@ -267,12 +334,15 @@ int Hotel::signup(string buffer,int fd)
     users.push_back(new_user);
     
     pre_user.erase(pre_user.begin() + pre_index);
+    encode_users();
     err_231(fd);
     reservation_page(fd);
     return 2;
 }
 void Hotel::logout(int fd)
 {
+    int index=find_user(fd);
+    users[index].fd = -1;
     err_201(fd);
     return; 
 }
@@ -292,7 +362,8 @@ bool Hotel::edit_information(string buffer,int fd)
         users[index].password = words[0];
         users[index].address = words[2];
         users[index].phoneNumber = words[1];
-
+        
+        encode_users();
         err_312(fd);
         return 2;
     }
@@ -338,6 +409,7 @@ int Hotel::leave_room(string input_str,int fd)
                     {
                         rooms[index].capacity = rooms[index].capacity + rooms[index].users[j].numOfBeds;
                         rooms[index].users.erase(rooms[index].users.begin() + j);
+                        encode_rooms();
                         err_413(fd);
                         return 2;
                     }
@@ -418,6 +490,7 @@ int Hotel::room_handler(string buffer, int fd)
         }
         else
         {
+            encode_rooms();
             err_104(fd);
         }
     }
@@ -430,6 +503,7 @@ int Hotel::room_handler(string buffer, int fd)
         }
         else
         {
+            encode_rooms();
             err_105(fd);
         }
     }
@@ -442,6 +516,7 @@ int Hotel::room_handler(string buffer, int fd)
         }
         else
         {
+            encode_rooms();
             err_106(fd);
         }
     }
@@ -477,22 +552,21 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     else if( commands.size() == 1 && number == "3" )
     {
-        cout << users[index].admin << endl;
         rooms_information(users[index].admin,fd);
         reservation_page(fd);
         return 2;
     }
     else if( commands.size() == 1 && number == "4" )
     {
-        
+        return 2;
     }
     else if( commands.size() == 1 && number == "5" )
     {
-        
+        return 5;
     }
     else if( commands.size() == 1 && number == "6" )
     {
-        
+        return 2;
     }
     else if( commands.size() == 1 && number == "7" )
     {
@@ -519,7 +593,59 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     return 2;
 }
+void Hotel::show_reserve(int fd)
+{
+    int index = find_user(fd);
+    for ( int i = 0 ; i< rooms.size() ; i ++)
+    {
+        for ( int j = 0 ; j< rooms[i].users.size() ; j++)
+        {
+            if ( rooms[i].users[j].id == users[index].id)
+            {
+                cout<< "reserved number "<<rooms[i].number << " with "<<rooms[i].users[i].numOfBeds<< " beds"<<endl;
+            }
+        }
+    }
+}
+int Hotel::cancel_reserve(string buffer, int fd)
+{
+    int index = find_user(fd);
+    vector <string> commands(string_split(buffer));
+    if ( commands[0] == "cancel" && commands.size() == 3)
+    {
+        int numOfBeds = stoi(commands[2]);
+        for( int i = 0; i< rooms.size(); i++)
+        {
+            if (rooms[i].number == commands[1])
+            {
+                for (int j = 0; j< rooms[i].users.size(); j++)
+                {
+                    if ( rooms[i].users[j].id == users[index].id && rooms[i].users[j].numOfBeds >= numOfBeds)
+                    {
+                        users[index].purse = users[index].purse + (rooms[i].price/2);
+                        rooms[i].users.erase(rooms[i].users.begin() + j);
+                        err_110(fd);
+                        return 2;
+                    }
+                    else
+                    {
+                        err_102(fd);
+                        return 2;
+                    }
+                }
+            }
+        }
+        err_101(fd);
+        return 2;
+    }
+    else
+    {
+        err_401(fd);
+        return 2;
+    }
+    return 2;
 
+}
 void Hotel::users_information(int fd)
 {
     string data = "";
@@ -605,13 +731,17 @@ void Hotel:: reservation_page(int fd)
     sleep(0.5);
     send(fd,"###############################\n1. View user information\n2. View all users\n3. View rooms information\n4. Booking\n5. Canceling\n6. Pass day\n7. Edit infromation\n8. Leaving room\n9. Rooms\n0. Logout\n###############################\n",225,0);
 }
-
 string clear_junk(string input,int size)
 {
     while(input.size() > size)
         input.pop_back();
     return input;
 }
+
+//up done // down bug
+
+
+
 
 int main(int argc, char const *argv[]) {
     vector <User> users;
@@ -674,8 +804,10 @@ int main(int argc, char const *argv[]) {
                         continue;
                     }
 
-                    if(sections[i] == 0)
+                    if( sections[i] == 0 )
+                    {
                         sections[i] = myhotel.signup_signin_handler(buffer,i);
+                    }
                     else if(sections[i] == 1)
                     { 
                         sections[i] = myhotel.signup(buffer,i);
@@ -683,13 +815,11 @@ int main(int argc, char const *argv[]) {
                     else if(sections[i] == 2)
                     {
                         sections[i] = myhotel.handle_reservation_page(buffer,i);
-                        if(sections[i] == 10)
-                        {
-                            cout << "check";
-                            // write(i,"bemir koskesh",14);
-                            // close(i);
-                            // FD_CLR(i,&master_set);
-                        }
+                    }
+                    else if(sections[i] == 5)
+                    {
+                        myhotel.show_reserve(i);
+                        sections[i] = myhotel.cancel_reserve(buffer,i);
                     }
                     else if(sections[i] == 7)
                     {
@@ -702,6 +832,12 @@ int main(int argc, char const *argv[]) {
                     else if(sections[i] == 9)
                     {
                         sections[i] = myhotel.room_handler(buffer,i);
+                    }
+                    if (sections[i] == 10) { // EOF
+                        printf("client fd = %d closed\n", i);
+                        close(i);
+                        FD_CLR(i, &master_set);
+                        continue;
                     }
                     // cout << "client" << i << " said:" << buffer;
                     // write(new_socket, "hello", 6);
