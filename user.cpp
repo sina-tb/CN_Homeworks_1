@@ -95,7 +95,7 @@ int sign_user(int fd)
             char userdata[1024];
             for(int i = 0;i < 4; i++)
             {
-                cin >> temp; //////change
+                cin >> temp; 
                 if(i == 0)
                     data = temp;
                 else
@@ -127,6 +127,7 @@ int main(int argc, char const *argv[]) {
     int fd;
     char buff[1024] = {0};
     char serverbuff[1024] = {0};
+    char menubuff[8192] = {0};
 
     fd = connectServer(server);
 
@@ -150,7 +151,23 @@ int main(int argc, char const *argv[]) {
         {
             recv(fd,serverbuff,1024,0); //recive menu
             cout << serverbuff;
-            
+            read(0,buff,1024);
+            send(fd, buff, strlen(buff) - 1, 0);
+            if(buff[0] == '0' && strlen(buff) == 1)
+                { 
+                    memset(serverbuff,0,1024);
+                    recv(fd,serverbuff,1024,0);
+                    cout << serverbuff;   
+                    return 0;
+                }
+            recv(fd,menubuff,8192,0);
+            cout << menubuff ;
+
+        }
+        else if( state == 2)
+        {
+            cout << "in if statement";
+            return 0;
         }
 
 

@@ -20,8 +20,8 @@ public:
     void decode_users();
     void decode_rooms();
     void decode_server();
-    void rooms_information(bool admin);
-    void users_information();
+    void rooms_information(bool admin, int fd);
+    void users_information(int fd);
     int signup_signin_handler(string input,int fd);
     void start_print(int fd);
     bool signin(string username , string password);
