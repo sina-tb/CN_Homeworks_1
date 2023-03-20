@@ -45,7 +45,7 @@
       },
       {
         "number":"301",
-        "status":0,
+        "status":1,
         "price":100,
         "maxCapacity":2,
         "capacity":0,
@@ -63,6 +63,103 @@
                 "reserveDate":"25-02-2023",
                 "checkoutDate":"26-02-2023"
             }
+        ]
+      },
+      {
+        "number":"401",
+        "status":0,
+        "price":200,
+        "maxCapacity":4,
+        "capacity":4,
+        "users":
+        [
+        ]
+      },
+      {
+        "number":"402",
+        "status":1,
+        "price":300,
+        "maxCapacity":3,
+        "capacity":0,
+        "users":
+        [
+          {
+              "id":1,
+              "numOfBeds":1,
+              "reserveDate":"26-02-2023",
+              "checkoutDate":"01-03-2023"
+          },
+          {
+              "id":3,
+              "numOfBeds":2,
+              "reserveDate":"27-02-2023",
+              "checkoutDate":"28-02-2023"
+          }
+        ]
+      },
+      {
+        "number":"701",
+        "status":0,
+        "price":50,
+        "maxCapacity":1,
+        "capacity":1,
+        "users":
+        [
+        ]
+      },
+      {
+        "number":"230",
+        "status":0,
+        "price":500,
+        "maxCapacity":8,
+        "capacity":7,
+        "users":
+        [
+          {
+            "id":1,
+            "numOfBeds":1,
+            "reserveDate":"01-03-2023",
+            "checkoutDate":"04-03-2023"
+          }
+        ]
+      },
+      {
+        "number":"403",
+        "status":0,
+        "price":20,
+        "maxCapacity":1,
+        "capacity":1,
+        "users":
+        [
+        ]
+      },
+      {
+        "number":"600",
+        "status":1,
+        "price":150,
+        "maxCapacity":3,
+        "capacity":0,
+        "users":
+        [
+          {
+            "id":1,
+            "numOfBeds":1,
+            "reserveDate":"03-03-2023",
+            "checkoutDate":"06-03-2023"
+          },
+          {
+            "id":2,
+            "numOfBeds":1,
+            "reserveDate":"07-03-2023",
+            "checkoutDate":"09-03-2023"
+          },
+          {
+            "id":3,
+            "numOfBeds":1,
+            "reserveDate":"27-02-2023",
+            "checkoutDate":"28-02-2023"
+          }
+
         ]
       }
     ]

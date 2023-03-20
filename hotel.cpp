@@ -341,6 +341,8 @@ int Hotel::signup(string buffer,int fd)
 }
 void Hotel::logout(int fd)
 {
+    int index=find_user(fd);
+    users[index].fd = -1;
     err_201(fd);
     return; 
 }
@@ -550,14 +552,13 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     else if( commands.size() == 1 && number == "3" )
     {
-        cout << users[index].admin << endl;
         rooms_information(users[index].admin,fd);
         reservation_page(fd);
         return 2;
     }
     else if( commands.size() == 1 && number == "4" )
     {
-        
+        return 2;
     }
     else if( commands.size() == 1 && number == "5" )
     {
@@ -565,7 +566,7 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     else if( commands.size() == 1 && number == "6" )
     {
-        
+        return 2;
     }
     else if( commands.size() == 1 && number == "7" )
     {
@@ -591,6 +592,20 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     return 2;
 }
+void Hotel::show_reserve(int fd)
+{
+    int index = find_user(fd);
+    for ( int i = 0 ; i< rooms.size() ; i ++)
+    {
+        for ( int j = 0 ; j< rooms[i].users.size() ; j++)
+        {
+            if ( rooms[i].users[j].id == users[index].id)
+            {
+                cout<< "reserved number "<<rooms[i].number << " with "<<rooms[i].users[i].numOfBeds<< " beds"<<endl;
+            }
+        }
+    }
+}
 int Hotel::cancel_reserve(string buffer, int fd)
 {
     int index = find_user(fd);
@@ -606,6 +621,8 @@ int Hotel::cancel_reserve(string buffer, int fd)
                 {
                     if ( rooms[i].users[j].id == users[index].id && rooms[i].users[j].numOfBeds >= numOfBeds)
                     {
+                        users[index].purse = users[index].purse + (rooms[i].price/2);
+                        rooms[i].users.erase(rooms[i].users.begin() + j);
                         err_110(fd);
                         return 2;
                     }
@@ -800,6 +817,7 @@ int main(int argc, char const *argv[]) {
                     }
                     else if(sections[i] == 5)
                     {
+                        myhotel.show_reserve(i);
                         sections[i] = myhotel.cancel_reserve(buffer,i);
                     }
                     else if(sections[i] == 7)
