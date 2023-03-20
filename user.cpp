@@ -103,7 +103,6 @@ int sign_user(int fd)
             }
             for(int i = 0; i < data.size();i++)
                 userdata[i] = data[i];
-            cout << userdata << endl;
             send(fd,userdata,data.size(),0);
             memset(serverbuff,0,1024);
             recv(fd,serverbuff,1024,0);

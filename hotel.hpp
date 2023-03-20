@@ -27,7 +27,6 @@ public:
     bool signin(string username , string password,int fd);
     int signup(string buffer,int fd);
     bool check_user_signup(string username);
-    void rooms_information(bool admin);
     void users_information();
     void reservation_page(int fd);
     int handle_reservation_page(string buffer, int fd);
@@ -46,6 +45,8 @@ public:
     void encode_users();
     void encode_rooms();
     void start_print(int fd);
+    void empty_rooms_information(bool admin,int fd);
+    int room_information_handler(string buffer,int fd);
     
 };
 
