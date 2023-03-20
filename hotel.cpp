@@ -43,7 +43,6 @@ void Hotel::encode_users()
     string filename = "jsons/UsersInfo.json";
     ifstream file(filename);
     Json::Value root;
-
     for ( int index = 0; index < users.size(); ++index )
     {
         Json::Value elements;
@@ -58,7 +57,7 @@ void Hotel::encode_users()
             elements["address"] = users[index].address;
         }
 
-        root.append(elements);
+        root["users"].append(elements);
     }
 
     Json::StreamWriterBuilder builder;
@@ -85,6 +84,7 @@ void Hotel::decode_users()
     for ( int index = 0; index < elements.size(); ++index )
     {
         User new_user;
+        new_user.fd = -1;
         new_user.id = elements[index]["id"].asInt();
         new_user.name = elements[index]["user"].asString();
         new_user.password  = elements[index]["password"].asString();
@@ -179,12 +179,13 @@ bool Hotel::check_user_signup(string username)
     } 
     return false;
 }
-bool Hotel::signin(string username, string password)
+bool Hotel::signin(string username, string password,int fd)
 {
     for ( int index = 0 ; index < users.size() ; index ++ )
     {
         if ( users[index].name == username && users[index].password == password)
         {   
+            users[index].fd = fd;
             return true;
         }
     } 
@@ -198,7 +199,7 @@ int Hotel:: signup_signin_handler(string input, int fd)
     {
         string username = words[1];
         string password = words[2];
-        bool signin_check = signin(username , password);
+        bool signin_check = signin(username , password, fd);
         if ( signin_check == true)
         {
             err_230(fd);
@@ -322,6 +323,7 @@ int Hotel::signup(string buffer,int fd)
     int p = stoi(info[1]);
 
     User new_user;
+    new_user.fd = fd;
     new_user.id = users.size();
     new_user.admin = false;
     new_user.name = username;
@@ -579,8 +581,7 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     else if( commands.size() == 1 && number == "0" )
     {
-        err_201(fd);
-        // logout(fd);
+        logout(fd);
         return 10;
     }
     else
@@ -627,10 +628,6 @@ int Hotel::cancel_reserve(string buffer, int fd)
     return 2;
 
 }
-
-
-//up done // down bug
-
 void Hotel::users_information(int fd)
 {
     string data = "";
@@ -716,13 +713,17 @@ void Hotel:: reservation_page(int fd)
     sleep(0.5);
     send(fd,"###############################\n1. View user information\n2. View all users\n3. View rooms information\n4. Booking\n5. Canceling\n6. Pass day\n7. Edit infromation\n8. Leaving room\n9. Rooms\n0. Logout\n###############################\n",225,0);
 }
-
 string clear_junk(string input,int size)
 {
     while(input.size() > size)
         input.pop_back();
     return input;
 }
+
+//up done // down bug
+
+
+
 
 int main(int argc, char const *argv[]) {
     vector <User> users;
@@ -785,8 +786,10 @@ int main(int argc, char const *argv[]) {
                         continue;
                     }
 
-                    if(sections[i] == 0)
+                    if( sections[i] == 0 )
+                    {
                         sections[i] = myhotel.signup_signin_handler(buffer,i);
+                    }
                     else if(sections[i] == 1)
                     { 
                         sections[i] = myhotel.signup(buffer,i);
@@ -794,22 +797,9 @@ int main(int argc, char const *argv[]) {
                     else if(sections[i] == 2)
                     {
                         sections[i] = myhotel.handle_reservation_page(buffer,i);
-                    if(sections[i] == 10)
-                    {
-                            cout << "check";
-                            // write(i,"bemir koskesh",14);
-                            // close(i);
-                            // FD_CLR(i,&master_set);
-                    }
                     }
                     else if(sections[i] == 5)
                     {
-                        myhotel.show_reserve(i);
-                        sections[i] = myhotel.cancel_reserve(buffer,i);
-                    }
-                    else if(sections[i] == 5)
-                    {
-                        myhotel.show_reserve(i);
                         sections[i] = myhotel.cancel_reserve(buffer,i);
                     }
                     else if(sections[i] == 7)
@@ -823,6 +813,12 @@ int main(int argc, char const *argv[]) {
                     else if(sections[i] == 9)
                     {
                         sections[i] = myhotel.room_handler(buffer,i);
+                    }
+                    if (sections[i] == 10) { // EOF
+                        printf("client fd = %d closed\n", i);
+                        close(i);
+                        FD_CLR(i, &master_set);
+                        continue;
                     }
                     // cout << "client" << i << " said:" << buffer;
                     // write(new_socket, "hello", 6);

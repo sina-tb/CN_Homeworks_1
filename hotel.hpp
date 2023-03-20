@@ -24,7 +24,7 @@ public:
     int signup_signin_handler(string input,int fd);
     int find_pre_user(int fd);
     int find_user(int fd);
-    bool signin(string username , string password);
+    bool signin(string username , string password,int fd);
     int signup(string buffer,int fd);
     bool check_user_signup(string username);
     void rooms_information(bool admin);
