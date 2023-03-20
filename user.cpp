@@ -134,6 +134,7 @@ int main(int argc, char const *argv[]) {
     {
         memset(buff,0,1024);
         memset(serverbuff,0,1024);
+        memset(menubuff,0,1024);
         if(state == -1)
         {   
             recv(fd,serverbuff,1024,0);
@@ -152,24 +153,11 @@ int main(int argc, char const *argv[]) {
             cout << serverbuff;
             read(0,buff,1024);
             send(fd, buff, strlen(buff) - 1, 0);
-            if(buff[0] == '0' && strlen(buff) == 1)
-                { 
-                    memset(serverbuff,0,1024);
-                    recv(fd,serverbuff,1024,0);
-                    cout << serverbuff;   
-                    return 0;
-                }
             recv(fd,menubuff,8192,0);
             cout << menubuff ;
-
+            if(buff[0] == '0' && strlen(buff) == 2)
+                return 0;
         }
-        else if( state == 2)
-        {
-            cout << "in if statement";
-            return 0;
-        }
-
-
         // recv(fd,serverbuff,1024,0);
         // printf("server said:%s\n",serverbuff);
         // read(0,buff,1024);
