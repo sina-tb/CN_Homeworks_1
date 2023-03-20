@@ -103,7 +103,6 @@ int sign_user(int fd)
             }
             for(int i = 0; i < data.size();i++)
                 userdata[i] = data[i];
-            cout << userdata << endl;
             send(fd,userdata,data.size(),0);
             memset(serverbuff,0,1024);
             recv(fd,serverbuff,1024,0);
@@ -117,6 +116,30 @@ int sign_user(int fd)
     return 0;
 }
 
+int edit_info(int fd,bool admin)
+{
+    string data, temp;
+    char userdata[1024];
+    if(admin)
+        cin >> data;
+    else     
+        for(int i = 0;i < 3; i++)
+        {
+            cin >> temp; 
+            if(i == 0)
+                data = temp;
+            else
+                data = data + " " + temp;
+        }
+    for(int i = 0; i < data.size();i++)
+        userdata[i] = data[i];
+    send(fd,userdata,data.size(),0);
+    char serverbuff[1024];
+    recv(fd,serverbuff,1024,0);
+    cout << serverbuff << endl;
+    return 1;
+}
+
 
 
 int main(int argc, char const *argv[]) {
@@ -128,6 +151,8 @@ int main(int argc, char const *argv[]) {
     char buff[1024] = {0};
     char serverbuff[1024] = {0};
     char menubuff[8192] = {0};
+
+    bool admin;
 
     fd = connectServer(server);
 
@@ -158,6 +183,42 @@ int main(int argc, char const *argv[]) {
             cout << menubuff ;
             if(buff[0] == '0' && strlen(buff) == 2)
                 return 0;
+            else if(buff[0] == '7' && strlen(buff) == 2)
+            {
+                if(strlen(menubuff) == 31)
+                    admin = true;
+                else 
+                    admin = false; 
+                state = 7;
+            }
+            else if(buff[0] == '8' && strlen(buff) == 2)
+                state = 8;
+            else if(buff[0] == '9' && strlen(buff) == 2)
+            {
+                if(menubuff[0] != '4')
+                    state = 9;
+            }
+        }
+        else if(state == 7)
+        {
+            edit_info(fd, admin);
+            state = 1;
+        }
+        else if(state == 8)
+        {
+            read(0,buff,1024);
+            send(fd, buff, strlen(buff) - 1, 0);
+            recv(fd,menubuff,8192,0);
+            cout << menubuff ;
+            state = 1;
+        }
+        else if(state == 9)
+        {
+            read(0,buff,1024);
+            send(fd, buff, strlen(buff) - 1, 0);
+            recv(fd,menubuff,8192,0);
+            cout << menubuff ;
+            state = 1;
         }
         // recv(fd,serverbuff,1024,0);
         // printf("server said:%s\n",serverbuff);

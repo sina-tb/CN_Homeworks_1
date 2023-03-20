@@ -346,7 +346,7 @@ void Hotel::logout(int fd)
     err_201(fd);
     return; 
 }
-bool Hotel::edit_information(string buffer,int fd)
+int Hotel::edit_information(string buffer,int fd)
 {
     int index = find_user(fd);
     vector <string> words(string_split(buffer));
@@ -376,6 +376,8 @@ bool Hotel::edit_information(string buffer,int fd)
         }
 
         users[index].password = words[0];
+        encode_users();
+        err_312(fd);
         return 2;
     }
 
@@ -570,19 +572,31 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     else if( commands.size() == 1 && number == "7" )
     {
+        if(users[index].admin == true)
+            write(fd,"please enter your new password\n",32);
+        else 
+            write(fd,"please enter your new password,phone and address\n",50);
         return 7;
     }
     else if( commands.size() == 1 && number == "8" )
     {
+        write(fd,"please enter room number\n",26);
         return 8;
     }
     else if( commands.size() == 1 && number == "9" )
     {
+        if(users[index].admin == false)
+        {
+            err_403(fd);
+            reservation_page(fd);
+            return 2;
+        }
+        write(fd,"enter your command\n",20);
         return 9;
     }
     else if( commands.size() == 1 && number == "0" )
     {
-        err_201(fd);
+        logout(fd);
         return 10;
     }
     else
@@ -753,8 +767,6 @@ int main(int argc, char const *argv[]) {
     myhotel.decode_rooms();
 
     struct server server;
-    // if(!decode_server(&server))
-    //     return 0;
     decode_server(&server);
     int new_socket, max_sd;
     char temp_buff [2048];
@@ -824,23 +836,19 @@ int main(int argc, char const *argv[]) {
                     else if(sections[i] == 7)
                     {
                         sections[i] = myhotel.edit_information(buffer,i);
+                        myhotel.reservation_page(i);
                     }
                     else if(sections[i] == 8)
                     {
                         sections[i] = myhotel.leave_room(buffer,i);
+                        myhotel.reservation_page(i);
                     }
                     else if(sections[i] == 9)
                     {
                         sections[i] = myhotel.room_handler(buffer,i);
-                    }
-                    if (sections[i] == 10) { // EOF
-                        printf("client fd = %d closed\n", i);
-                        close(i);
-                        FD_CLR(i, &master_set);
-                        continue;
+                        myhotel.reservation_page(i);
                     }
                     // cout << "client" << i << " said:" << buffer;
-                    // write(new_socket, "hello", 6);
                     buffer = "";
                     memset(temp_buff,0,2048);
                 }
