@@ -19,7 +19,8 @@ public:
     void decode_users();
     void decode_rooms();
     void decode_server();
-    void start_print(int fd);
+    void rooms_information(bool admin,int fd);
+    void users_information(int fd);
     int signup_signin_handler(string input,int fd);
     int find_pre_user(int fd);
     int find_user(int fd);
@@ -44,6 +45,7 @@ public:
     void show_reserve(int fd);
     void encode_users();
     void encode_rooms();
+    void start_print(int fd);
     
 };
 

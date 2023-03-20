@@ -530,23 +530,27 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     if( commands.size() == 1 && number == "1" )
     {
         logged_user_information(fd);
+        reservation_page(fd);
         return 2;
     }
     else if( commands.size() == 1 && number == "2" )
     {
         if(users[index].admin == true)
         {
-            users_information();
+            users_information(fd);
         }
         else
         {
             err_403(fd);
         }
+        reservation_page(fd);
         return 2;
     }
     else if( commands.size() == 1 && number == "3" )
     {
-        rooms_information(users[index].admin);
+        cout << users[index].admin << endl;
+        rooms_information(users[index].admin,fd);
+        reservation_page(fd);
         return 2;
     }
     else if( commands.size() == 1 && number == "4" )
@@ -575,7 +579,8 @@ int Hotel:: handle_reservation_page(string input_str, int fd)
     }
     else if( commands.size() == 1 && number == "0" )
     {
-        logout(fd);
+        err_201(fd);
+        // logout(fd);
         return 10;
     }
     else
@@ -626,77 +631,85 @@ int Hotel::cancel_reserve(string buffer, int fd)
 
 //up done // down bug
 
-
-void Hotel::show_reserve(int fd)
+void Hotel::users_information(int fd)
 {
-    int index = find_user(fd);
-    for (int i = 0; i< rooms.size(); i++)
-    {
-        for (int j = 0; j< rooms[i].users.size(); j++)
-        {
-            if (rooms[i].users[j].id == users[index].id)
-            {
-                cout << "room number "<<rooms[i].number<<"with numOfBeds "<<rooms[i].users[j].numOfBeds <<endl;
-            }
-        }
-    }
-}
-void Hotel::users_information()
-{
+    string data = "";
     for ( int i = 0 ; i < users.size() ; i++)
     {
-        cout<< endl;
-        cout<< "id : " << users[i].id<<endl;
-        cout<< "name : " << users[i].name<<endl;
-        cout<< "password : " << users[i].password<<endl;
-        cout<< "admin : " << users[i].admin<<endl;
-        if ( users[i].admin == false)
+        char admin;
+        if(users[i].admin)
+            admin = '1';
+        else 
+            admin = '0';
+        data = data + "\n";
+        data = data + "id: " + to_string(users[i].id) + "\n";
+        data = data + "name: " + users[i].name + "\n";
+        data = data + "admin: " + admin + "\n";
+        data = data + "password: " + users[i].password + "\n";
+        if (users[i].admin == false)
         {
-            cout<< "purse : " << users[i].purse<<endl;
-            cout<< "phoneNumber : " << users[i].phoneNumber<<endl;
-            cout<< "address : " << users[i].address<<endl;
+            data = data + "purse: " + to_string(users[i].purse) + "\n";
+            data = data + "phoneNumber: " + users[i].phoneNumber + "\n";
+            data = data + "address: " + users[i].address + "\n";
         }
     }
+    char temp [8192];
+    for(int i = 0;i < data.size();i++)
+        temp[i] = data[i];
+    write(fd,temp,data.size());
 }
-void Hotel::rooms_information(bool admin)
+void Hotel::rooms_information(bool admin,int fd)
 {
-    for ( int i = 0 ; i < rooms.size() ; i++ )
+    string data = "";
+    for ( int i = 0 ; i < rooms.size() ; i++)
     {
-        cout<<endl;
-        cout<< "number : " << rooms[i].number<<endl;
-        cout<< "status : " << rooms[i].status<<endl;
-        cout<< "price : " << rooms[i].price<<endl;
-        cout<< "maxCapacity : " << rooms[i].maxCapacity<<endl;
-        cout<< "capacity : " << rooms[i].capacity<<endl;
-        if ( admin == true)
+        data = data + "\n";
+        data = data + "number : " + rooms[i].number + "\n";
+        data = data + "status : " + to_string(rooms[i].status) + "\n";
+        data = data + "price : " + to_string(rooms[i].price) + "\n";
+        data = data + "maxCapacity : " + to_string(rooms[i].maxCapacity) + "\n";
+        data = data + "capacity : " + to_string(rooms[i].capacity) + "\n";
+        if (admin == true)
         {
             for ( int j = 0; j< rooms[i].users.size(); j++)
             {
-                cout<<endl;
-                cout<< "   id : " << rooms[i].users[j].id<<endl;
-                cout<< "   numbOfBeds : " << rooms[i].users[j].numOfBeds<<endl;
-                cout<< "   reserveDate : " << rooms[i].users[j].reserveDate<<endl;
-                cout<< "   checkoutDate : " << rooms[i].users[j].checkoutDate<<endl;
+                data = data + "\n";
+                data = data + "   id : " + to_string(rooms[i].users[j].id) + "\n";
+                data = data + "   numbIfBeds : " + to_string(rooms[i].users[j].numOfBeds) + "\n";
+                data = data + "   reserveDate : " + rooms[i].users[j].reserveDate + "\n";
+                data = data + "   checkoutDate : " + rooms[i].users[j].checkoutDate + "\n";
             }
         }
     }
+    char temp [8192];
+    for(int i = 0;i < data.size();i++)
+        temp[i] = data[i];
+    write(fd,temp,data.size());
 }
 void Hotel:: logged_user_information(int fd)
 {
     int index = find_user(fd);
-    cout<<"*******************************"<<endl;
-    cout<< "Your information:"<<endl;
-    cout<< "id: "<<users[index].id<<endl;
-    cout<< "name: "<<users[index].name<<endl;
-    cout<< "admin: "<<users[index].admin<<endl;
-    cout<< "password: "<<users[index].password<<endl;
+    char admin;
+    if(users[index].admin)
+        admin = '1';
+    else 
+        admin = '0';
+    string data;
+    data = "Your information:\n";
+    data = data + "id: " + to_string(users[index].id) + "\n";
+    data = data + "name: " + users[index].name + "\n";
+    data = data + "admin: " + admin + "\n";
+    data = data + "password: " + users[index].password + "\n";
     if (users[index].admin == false)
     {
-        cout<< "purse: "<<users[index].purse<<endl;
-        cout<< "phoneNumber: "<<users[index].phoneNumber<<endl;
-        cout<< "address: "<<users[index].address<<endl;
+        data = data + "purse: " + to_string(users[index].purse) + "\n";
+        data = data + "phoneNumber: " + users[index].phoneNumber + "\n";
+        data = data + "address: " + users[index].address + "\n";
     }
-    cout<<"*******************************"<<endl;
+    char temp [1024];
+    for(int i = 0;i < data.size();i++)
+        temp[i] = data[i];
+    write(fd,temp,data.size());
 }
 void Hotel:: reservation_page(int fd)
 {
@@ -780,9 +793,19 @@ int main(int argc, char const *argv[]) {
                     }
                     else if(sections[i] == 2)
                     {
-                        // myhotel.reservation_page(i);
-                        cout << "welcome to section 2" << endl;
                         sections[i] = myhotel.handle_reservation_page(buffer,i);
+                    if(sections[i] == 10)
+                    {
+                            cout << "check";
+                            // write(i,"bemir koskesh",14);
+                            // close(i);
+                            // FD_CLR(i,&master_set);
+                    }
+                    }
+                    else if(sections[i] == 5)
+                    {
+                        myhotel.show_reserve(i);
+                        sections[i] = myhotel.cancel_reserve(buffer,i);
                     }
                     else if(sections[i] == 5)
                     {
@@ -801,7 +824,7 @@ int main(int argc, char const *argv[]) {
                     {
                         sections[i] = myhotel.room_handler(buffer,i);
                     }
-                    cout << "client" << i << " said:" << buffer;
+                    // cout << "client" << i << " said:" << buffer;
                     // write(new_socket, "hello", 6);
                     buffer = "";
                     memset(temp_buff,0,2048);
