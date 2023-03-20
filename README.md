@@ -81,7 +81,7 @@ Errors: All errors and messages the server may send to users. each error has a f
 sections : An int array for saving every state of each user that connects to server
 
 ## Code verify
-
+#### these are some screenshots of codes options to verify its functioning 
 ### User:
 #### Signup part:
 
@@ -105,13 +105,32 @@ sections : An int array for saving every state of each user that connects to ser
 
 #### Canceling
 
+![7](https://user-images.githubusercontent.com/88041997/226441928-bd16ef8e-e4a8-4f0f-9422-efb58ade6c08.png)
+
+![8](https://user-images.githubusercontent.com/88041997/226441925-7a2950c5-1beb-4cad-8be3-5a0f4d05f713.png)
+
+![9](https://user-images.githubusercontent.com/88041997/226441916-b1b21a58-0c8a-486b-94b6-54cc328c9ee5.png)
+
 
 #### Edit information
 
+![2](https://user-images.githubusercontent.com/88041997/226438744-97bf3eee-e0a4-47ec-9d1b-5e8579b599bf.png)
+
+![3](https://user-images.githubusercontent.com/88041997/226438713-d1bd6021-73a2-474e-b72c-7006e5209eae.png)
+
+![4](https://user-images.githubusercontent.com/88041997/226438711-112dc5c7-fcb4-45a3-a4e3-7eac673f6ccb.png)
+
 #### Leaving rooms
+
+![5](https://user-images.githubusercontent.com/88041997/226438706-7bae51e3-8029-460f-bc09-bdf5f22d9b27.png)
+
+![6](https://user-images.githubusercontent.com/88041997/226438682-1ad96595-07ae-44fd-83d1-cffb275d035f.png)
+
+![Screenshot from 2023-03-20 22-48-19](https://user-images.githubusercontent.com/88041997/226443739-a1136a59-2216-47c3-a0e0-0f512be28545.png)
 
 #### Rooms
 
+![Screenshot from 2023-03-20 22-42-18](https://user-images.githubusercontent.com/88041997/226442326-2c498b34-d497-4dc0-bb46-15022c1693a9.png)
 
 ### Admin:
 
@@ -133,11 +152,27 @@ sections : An int array for saving every state of each user that connects to ser
 
 #### Canceling
 
-
-#### Edit information
-
-#### Leaving rooms
+![1](https://user-images.githubusercontent.com/88041997/226438745-2b5c6d6f-45a4-4588-beed-9fea474b80ee.png)
 
 #### Add
+
+![1](https://user-images.githubusercontent.com/88041997/226441962-d0e6644e-c29d-4077-a931-5d854411dcc4.png)
+
+![2](https://user-images.githubusercontent.com/88041997/226441956-d82c0ab0-39fb-4b5c-a98e-97181398c23f.png)
+
+
+
 #### Modify
-#### remove 
+
+![3](https://user-images.githubusercontent.com/88041997/226441950-6e0a553f-6ad4-451e-a00e-2c3d7e182b88.png)
+
+![4](https://user-images.githubusercontent.com/88041997/226441944-79acc9dd-21ce-4b02-8eee-4847389a24b8.png)
+
+
+#### remove
+
+![5](https://user-images.githubusercontent.com/88041997/226441939-75efadd4-7e78-4bd0-b36b-27f8579c728a.png)
+
+![6](https://user-images.githubusercontent.com/88041997/226441936-172f0fdb-21d2-4937-81e7-b78b1bca4d3e.png)
+
+
